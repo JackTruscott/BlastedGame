@@ -53,34 +53,28 @@ int main() {
 
 //displays connecting message
 	cout << "Connecting"; // Print the word "Connecting"
-	cout.flush();  // Ensure the output is printed immediately (flush the output buffer)
+	
 
 	int rep = 0;
 
-	while (rep < 2) {  // Run this loop twice
-		// Print the dots, one at a time with a delay
-		printWithDelay(".", 500);  // Print the first dot
-		printWithDelay(".", 500);  // Print the second dot
-		printWithDelay(".", 500);  // Print the third dot
+	while (rep < 3) {  
+		
+		this_thread::sleep_for(std::chrono::milliseconds(500));
 
-		// Wait for one more second after printing all the dots
-		this_thread::sleep_for(chrono::milliseconds(1000));
+		printWithDelay("...", 500);
 
-		// Move the cursor back to the end of "Connecting"
-		cout << "\rConnecting";  // Cursor moves back to "Connecting"
-		cout.flush();  // Ensure the output is printed immediately
+		cout << "\033[11G";
 
-		// Clear the dots by printing spaces over them
-		printWithDelay("   ", 500);  // Clear the dots by printing 3 spaces
+		cout << "   "; 
 
-		// Wait before starting again (if you want to add some pause)
-		this_thread::sleep_for(chrono::milliseconds(500));
+		cout << "\033[11G";
 
 		rep++;
+
 	}
 
-	// Move to the next line after clearing the dots
-	cout << endl;
+	cout << "\rConnecting...\n";
+	
 	
 	
 	
@@ -91,7 +85,7 @@ int main() {
 	
 	
 //prints first message, and resets repeat counter variable, and pauses code for 1500 ms.	
-		cout << "Error connecting to Houston network. Trying backup...\n";
+		cout << "Error connecting to Houston network. Trying backup.\n";
 
 		rep = 0;
 
@@ -103,19 +97,27 @@ int main() {
 
 
 
+		cout << "Connecting";
 
+		rep = 0;
 
+		while (rep < 3) {
 
+			this_thread::sleep_for(std::chrono::milliseconds(500));
 
-	while (rep < 5) {
+			printWithDelay("...", 500);
 
-		cout << "Connecting...\n";
+			cout << "\033[11G";
 
-		rep = rep + 1;
+			cout << "   ";
 
-		this_thread::sleep_for(std::chrono::milliseconds(500));
+			cout << "\033[11G";
 
-	}//repeats connecting another 5 times
+			rep++;
+
+		}
+
+		cout << "\rConnecting...\n";
 
 
 
@@ -126,9 +128,11 @@ int main() {
 
 
 //displays message of switching to radio mode.
-		cout << "Backup network connection failed. Switching to radio mode...";
+		cout << "Backup network connection failed. Switching to radio mode";
 
-		this_thread::sleep_for(std::chrono::milliseconds(1000));
+		printWithDelay("...", 500);
+
+		this_thread::sleep_for(std::chrono::milliseconds(250));
 
 		cout << "Done.\n\n";
 
@@ -190,14 +194,18 @@ int main() {
 
 				if (ch == 27) {  // 27 is the ASCII value for the Escape key, so when getch tells the computer the value is 27, this code runs
 
-					cout << "Exiting...\n";
+					cout << "Exiting...\n\n";
+
+					this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 					return 0;
 
 				}
 				if (ch == 13) {  // 13 is the ASCII value for the Enter key, same process with getch
 
-					cout << "Loading...\n";
+					cout << "Loading...\n\n";
+
+					this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 					break;
 
@@ -390,6 +398,11 @@ int main() {
 					if (rep < 7) { cin >> file; }
 
 				}
+				else if (file.find("skip") != string::npos) {
+
+					rep = 7;
+
+					}
 				else {
 
 					cout << "Could not find the file specified.\n";
@@ -404,6 +417,23 @@ int main() {
 		}
 //story files were created by AI, but I am planning to rewrite them after this project is turned in.
 
+
+
+
+
+
+
+
+
+
+
+		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
+
+		this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
+
+		this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
 
