@@ -466,7 +466,20 @@ int main() {
 	}
 	printWithDelay("AS7SS: ISS, we have solid copy! This is Tiangong, we read!\n\n", 50);
 	printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
-	this_thread::sleep_for(std::chrono::milliseconds(1000));
+	while (true) {
+		if (_kbhit()) {
+
+			char ch = _getch();
+
+			if (ch == 13) {
+
+				break;
+
+			}
+			else {}
+
+		}
+	}
 	system("cls");
 	printWithDelay("PART 2: CONNECTING THE HEAVENS\n\n\n", 50);
 
