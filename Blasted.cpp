@@ -440,6 +440,9 @@ void missionDirective() {
 
 //part1 function, runs first puzzle
 void part1() {
+	if (STATE == 1) {
+		return;
+	}
 	int shift = 0;
 	printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 
@@ -581,7 +584,20 @@ void part1() {
 
 
 
+void part2Animation() {
+	const wchar_t* wideString = L"\n\n\n\n\n                             ░                                                \n                      ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                     ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                       ▒    ▒▒▒░                                               \n▒▓▒░░░░░▓▓▓  ░░       ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░ ░ ░░░░░           \n░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n▒▓▒                                               \n░░░░░░▒█▒░░░░░░                                         \n░▓▒▒                                              \n▒▓▒                                               \n\n░░                                                \n\n\n\n\n\n\n\n";
 
+	int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, nullptr, 0, nullptr, nullptr); //Windows c++ function that handles finding the size reqiured of the input buffer to move it the output one, pointed to by "multiByteString"
+
+	char* multiByteString = new char[bufferSize]; // Allocates the new buffer
+
+	WideCharToMultiByte(CP_UTF8, 0, wideString, -1, multiByteString, bufferSize, nullptr, nullptr); // Converts my unicode text from UTF-16 to UTF-8
+
+	cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
+
+	delete[] multiByteString;
+	
+}
 //part2 function, runs second puzzle
 void part2() {
 	printWithDelay("PART 2: CONNECTING THE HEAVENS\n\n\n", 50);
@@ -613,6 +629,8 @@ int main() {
 	story();
 	
 	part1();
+
+	part2Animation();
 
 	part2();
 
