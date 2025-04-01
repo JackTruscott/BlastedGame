@@ -14,8 +14,9 @@ using namespace std;
 
 //GLOBAL VARIABLES
 int rep;
+int STATE;
 string name;
-
+string pass;
 
 
 
@@ -150,8 +151,20 @@ void startOrStop() {
 
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+				STATE = 0;
+
 				break;
 
+			}
+			if (ch == 68) {
+
+				cout << "DEBUG MODE\n\n";
+
+				this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+				STATE = 1;
+
+				break;
 			}
 			else {}
 
@@ -179,6 +192,10 @@ void startOrStop() {
 //dirAnimation function, plays an animation of the user's directory, and displays the files in the directory
 void dirAnimation() {
 	
+	if (STATE == 1) {
+		return;
+	}
+
 	cout << "Loading user data...";
 
 	this_thread::sleep_for(std::chrono::milliseconds(1500));
@@ -228,6 +245,9 @@ void dirAnimation() {
 void userPass() {
 	//accepts user and password, used for later gameplay, hopefully
 	
+	if (STATE == 1) {
+		return;
+	}
 
 	string pass;
 
@@ -253,6 +273,10 @@ void userPass() {
 //story function, opens text files with story details
 void story() {
 	
+	if (STATE == 1) {
+		return;
+	}
+
 	string file;
 
 	cin >> file;
@@ -395,6 +419,11 @@ void story() {
 
 //missionDirective function, displays the game's objective
 void missionDirective() {
+
+	if (STATE == 1) {
+		return;
+	}
+
 	system("cls");
 
 	printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
@@ -510,7 +539,7 @@ void part1() {
 		
 
 	
-	printWithDelay("\nINBOUND: ISS, we have solid copy! This is Tiangong, we read!\n\n", 150);
+	printWithDelay("\nINBOUND: 'ISS, we have solid copy! This is Tiangong, we read!'\n\n", 150);
 	printWithDelay("PRESS ENTER TO CONTINUE...\n", 50);
 	while (true) {
 		if (_kbhit()) {
@@ -556,7 +585,19 @@ void part1() {
 //part2 function, runs second puzzle
 void part2() {
 	printWithDelay("PART 2: CONNECTING THE HEAVENS\n\n\n", 50);
+	printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.", 50);
+
 }
+
+
+
+
+
+
+
+
+
+
 //MAIN SCRIPT
 
 int main() {
