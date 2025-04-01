@@ -584,20 +584,57 @@ void part1() {
 
 
 
-void part2Animation() {
-	const wchar_t* wideString = L"\n\n\n\n\n                             ░                                                \n                      ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                     ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                       ▒    ▒▒▒░                                               \n▒▓▒░░░░░▓▓▓  ░░       ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░ ░ ░░░░░           \n░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n▒▓▒                                               \n░░░░░░▒█▒░░░░░░                                         \n░▓▒▒                                              \n▒▓▒                                               \n\n░░                                                \n\n\n\n\n\n\n\n";
+void animate(const wstring& wideString) {
+	// Get console width dynamically
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left;
 
-	int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, nullptr, 0, nullptr, nullptr); //Windows c++ function that handles finding the size reqiured of the input buffer to move it the output one, pointed to by "multiByteString"
+	int speed = 50; // Delay in milliseconds
+	int maxOffset = consoleWidth;
 
-	char* multiByteString = new char[bufferSize]; // Allocates the new buffer
+	// Animation loop moving right and disappearing
+	for (int offset = 0; offset <= maxOffset + 10; ++offset) {
+		system("cls");
 
-	WideCharToMultiByte(CP_UTF8, 0, wideString, -1, multiByteString, bufferSize, nullptr, nullptr); // Converts my unicode text from UTF-16 to UTF-8
+		// Shift ship right by adding spaces at the start of each line
+		wstring shiftedString = L"";
+		for (const wchar_t* line = wideString.c_str(); *line; ++line) {
+			if (*line == L'\n') {
+				shiftedString += L"\n" + wstring(min(offset, consoleWidth), L' ');
+			}
+			else {
+				int currentPos = shiftedString.length() - shiftedString.rfind(L'\n') - 1;
+				if (currentPos < consoleWidth) {
+					shiftedString += *line;
+				}
+			}
+		}
 
-	cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
+		// Convert wide string to multibyte for console output
+		int bufferSize = WideCharToMultiByte(CP_UTF8, 0, shiftedString.c_str(), -1, nullptr, 0, nullptr, nullptr);
+		char* multiByteString = new char[bufferSize];
+		WideCharToMultiByte(CP_UTF8, 0, shiftedString.c_str(), -1, multiByteString, bufferSize, nullptr, nullptr);
 
-	delete[] multiByteString;
-	
+		cout << multiByteString << endl;
+		delete[] multiByteString;
+		Sleep(speed);
+	}
+	system("cls");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 //part2 function, runs second puzzle
 void part2() {
 	printWithDelay("PART 2: CONNECTING THE HEAVENS\n\n\n", 50);
@@ -630,7 +667,7 @@ int main() {
 	
 	part1();
 
-	part2Animation();
+	animate(L"\n\n\n\n\n                            ░                                                \n                       ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                      ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                        ▒    ▒▒▒░                                               \n   ▒▓▒░░░░░▓▓▓  ░░      ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n  ░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░░░░░░░           \n  ░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n  ▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n  ▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n  ▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n  ░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n                  ▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n                  ▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n                             ▒▓▒                                               \n                       ░░░░░░▒█▒░░░░░░                                         \n                            ░▓▒▒                                              \n                             ▒▓▒                                               \n");
 
 	part2();
 
