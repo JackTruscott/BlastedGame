@@ -1,7 +1,7 @@
 ﻿
 
 
-//HEADERS
+//HEADERS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <iostream>
 #include <thread>//for wait
 #include <chrono>//for wait
@@ -13,12 +13,14 @@
 #include <fcntl.h>
 #include <io.h>
 using namespace std;
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//GLOBAL VARIABLES
+//GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep;
-int STATE;
+int STATE; 
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//FUNCTIONS
+//FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void printWithDelay(const string& str, int delay_ms) {
 	for (char c : str) {
 		cout << c; this_thread::sleep_for(chrono::milliseconds(delay_ms));
@@ -104,36 +106,36 @@ int qte(int timeoutSeconds) {
 		}
 	}
 }
+void nasaRadioUtility() {
+	cout << "				 ___________________________\n";
+	cout << "				| NASA RADIO UTILITY, 1998. |\n";
+	wcoutForWindowsCMD(L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n");
+}
+void connecting() {
+	cout << "Connecting";
+	while (rep < 3) {
+		this_thread::sleep_for(std::chrono::milliseconds(500));
+		printWithDelay("...", 500);
+		cout << "\033[11G";
+		cout << "   ";
+		cout << "\033[11G";
+		rep++;
+	}
+	cout << "\rConnecting...\n";
+	rep = 0;
+} 
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//MAIN SCRIPT
+//MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
+//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);//allows the program to output unicode characters required for the title screen to properly display
 	//displays connecting message
-	cout << "Connecting"; // Print the word "Connecting"
-	while (rep < 3) {
-		this_thread::sleep_for(std::chrono::milliseconds(500));
-		printWithDelay("...", 500);
-		cout << "\033[11G";
-		cout << "   ";
-		cout << "\033[11G";
-		rep++;
-	}
-	cout << "\rConnecting...\n";
+	connecting();
 	//prints first message, and resets repeat counter variable, and pauses code for 1500 ms.	
 	cout << "ERR: No radio contact with default channel. Retrying with backup...\n";
-	rep = 0;
 	this_thread::sleep_for(std::chrono::milliseconds(1500));
-	cout << "Connecting";
-	rep = 0;
-	while (rep < 3) {
-		this_thread::sleep_for(std::chrono::milliseconds(500));
-		printWithDelay("...", 500);
-		cout << "\033[11G";
-		cout << "   ";
-		cout << "\033[11G";
-		rep++;
-	}
-	cout << "\rConnecting...\n";
+	connecting();
 	//displays message of switching to radio mode.
 	cout << "WARN: Backup connection failed. Switching to scan mode";
 	printWithDelay("...", 500);
@@ -169,6 +171,7 @@ int main() {
 		}
 	}
 	system("cls");
+//STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	if (STATE == 0) {
 		string pass;
 		string name;
@@ -268,28 +271,14 @@ int main() {
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
 		pauseForEnter();
 		system("cls");
-		cout << "				 ___________________________\n";
-		cout << "				| NASA RADIO UTILITY, 1998. |\n";
-		const wchar_t* wideString = L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n";
-		int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, nullptr, 0, nullptr, nullptr); //Windows c++ function that handles finding the size reqiured of the input buffer to move it the output one, pointed to by "multiByteString"
-		char* multiByteString = new char[bufferSize]; // Allocates the new buffer
-		WideCharToMultiByte(CP_UTF8, 0, wideString, -1, multiByteString, bufferSize, nullptr, nullptr); // Converts my unicode text from UTF-16 to UTF-8
-		cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
-		delete[] multiByteString;
+		nasaRadioUtility();
 		cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		printWithDelay("OUTBOUND: 'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
 		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' \n\n", 150);
 		pauseForEnter();
 		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...\n\n", 50);
 		pauseForEnter();
-		cout << "				 ___________________________\n";
-		cout << "				| NASA RADIO UTILITY, 1998. |\n";
-		wcout << L"‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n";
-		bufferSize = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, nullptr, 0, nullptr, nullptr); //Windows c++ function that handles finding the size reqiured of the input buffer to move it the output one, pointed to by "multiByteString"
-		multiByteString = new char[bufferSize]; // Allocates the new buffer
-		WideCharToMultiByte(CP_UTF8, 0, wideString, -1, multiByteString, bufferSize, nullptr, nullptr); // Converts my unicode text from UTF-16 to UTF-8
-		cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
-		delete[] multiByteString;
+		nasaRadioUtility();
 		cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		cin >> shift;
 		while (shift != 3) {
@@ -309,14 +298,11 @@ int main() {
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 	}
-	else if (STATE == 1) {}
-	animate(L"\n\n\n\n\n                            ░                                                \n                       ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                      ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                        ▒    ▒▒▒░                                               \n   ▒▓▒░░░░░▓▓▓  ░░      ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n  ░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░░░░░░░           \n  ░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n  ▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n  ▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n  ▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n  ░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n                  ▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n                  ▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n                             ▒▓▒                                               \n                       ░░░░░░▒█▒░░░░░░                                         \n                            ░▓▒▒                                              \n                             ▒▓▒                                               \n");
+//CURRENTLY DEBUGGING, MOVE UP WHEN DONE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 	printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 	pauseForEnter();
-	cout << "				 ___________________________\n";
-	cout << "				| NASA RADIO UTILITY, 1998. |\n";
-	wcoutForWindowsCMD(L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n");
+	nasaRadioUtility();
 	printWithDelay("OUTBOUND: 'Tiangong, this is ISS, how copy?'\n\n", 150);
 	printWithDelay("INBOUND: 'ISS, we read you loud and clear.'\n\n", 150);
 	printWithDelay("OUTBOUND: 'Copy, Tiangong. We're burning on schedule. Standby.\n\n", 150);
@@ -327,20 +313,35 @@ int main() {
 	this_thread::sleep_for(std::chrono::milliseconds(1000));
 	cout << "PRESS SPACE IN 3s OR LESS TO ENGAGE.\n";
 	qte(3);
-	cout << "IGNITION ENGAGED. STARTING BURN...\n";
+	cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
 	this_thread::sleep_for(std::chrono::milliseconds(1000));
 	cout << "PRESS SPACE NOW!\n";
 	qte(1);
 	system("cls");
-	cout << "				 ___________________________\n";
-	cout << "				| NASA RADIO UTILITY, 1998. |\n";
-	wcoutForWindowsCMD(L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n");
+	nasaRadioUtility();
 	printWithDelay("OUTBOUND: 'Initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Engines are shut down, repeat, burn is complete and engines are off.'\n\n", 150);
 	printWithDelay("INBOUND: 'Copy, ISS. We're standing by until it is time for our burn. Good luck.'\n\n", 150);
 	pauseForEnter();
+	animate(L"\n\n\n\n\n                            ░                                                \n                       ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                      ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                        ▒    ▒▒▒░                                               \n   ▒▓▒░░░░░▓▓▓  ░░      ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n  ░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░░░░░░░           \n  ░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n  ▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n  ▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n  ▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n  ░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n                  ▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n                  ▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n                             ▒▓▒                                               \n                       ░░░░░░▒█▒░░░░░░                                         \n                            ░▓▒▒                                              \n                             ▒▓▒                                               \n");
 	printWithDelay("//The burn was successful, and we're now on course for an intercept with the TSS. We're just waiting on their own burn.\n\n", 50);
-	this_thread::sleep_for(chrono::milliseconds(1000));
+	pauseForEnter();
+	cout << "ENGINE START...\n";
+	this_thread::sleep_for(std::chrono::milliseconds(1000));
+	cout << "IGNITION...\n";
+	this_thread::sleep_for(std::chrono::milliseconds(1000));
+	cout << "PRESS SPACE IN 2s OR LESS TO ENGAGE.\n";
+	qte(2);
+	cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
+	this_thread::sleep_for(std::chrono::milliseconds(1000));
+	cout << "PRESS SPACE NOW!\n";
+	qte(1);
+	nasaRadioUtility();
+	printWithDelay("INBOUND: 'ISS, this is Tiangong. We are initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Burn complete. We are on course to intercept.'\n\n", 150);
+	printWithDelay("OUTBOUND: 'Copy, Tiangong. See you on the other side.'\n\n", 150);
+	printWithDelay("//Tiangong's burn was also a succecss, and we're now on course to intercept. It should be smooth sailing from here...\n\n", 50);
+	pauseForEnter();
 	animate(L"\n\n\n\n\n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▓▓▒▓▒▓    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n                                               ▓▓▓▓▒▒                                               \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓                                            \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ░▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▓▒        ▒▒▒▒                                   \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▓▓▓▒▒▓▒▒▒▒▒▒▒▓▓▓▓▓                                 \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▒▒▒▓▓▓▓▓                                 \n            ▒▒▒▒▒           ▓ ▓▓▓▓   ▒▒▒▒▓    ▓▓▓▒▒▒▒▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▓▓▓▓       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒        ░░░                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▒▒▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▓▓▓▓▒▓                                              \n                                               ▓▓▓▓▓▓                                               \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▒    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░▒▒▒▒      \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▒▓▓▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      \n");
-
+	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
+	system("pause");
 	return 0;
 }
