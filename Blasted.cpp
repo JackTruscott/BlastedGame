@@ -186,7 +186,7 @@ int main() {
 		this_thread::sleep_for(std::chrono::milliseconds(500));
 		cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		printWithDelay("ls", 50);
+		printWithDelay("ls\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1500));
 		cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -266,6 +266,8 @@ int main() {
 		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
+		pauseForEnter();
+		system("cls");
 		cout << "				 ___________________________\n";
 		cout << "				| NASA RADIO UTILITY, 1998. |\n";
 		const wchar_t* wideString = L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n";
@@ -310,7 +312,7 @@ int main() {
 	else if (STATE == 1) {}
 	animate(L"\n\n\n\n\n                            ░                                                \n                       ▓▓▓▒░▓▒▓▓▓███▒▒▓▒░                                    \n                      ░░▒▒▒░▒▒░▒▒▒▒▒▒░▒▒▓░                                    \n                        ▒    ▒▒▒░                                               \n   ▒▓▒░░░░░▓▓▓  ░░      ░▒▓░ ░▓▒▒            ░░░░░ ░░░░░░░▒▒▒░░░░░░             \n  ░▒▒▒▒▒░░▓▓▓▓▓▓▒▒▒▒▒░▒▓▓▓▓███████▓▓▓█▓▓▓██▓▓▒█▓▓▓▓▓▓░▓█▓▒▓▒░▒▓▓▓▒▒▓▒░░░░░░░           \n  ░▒▒▒▒▒▒▒▒▓▓▒░ ▒▒░ ▓█ ░▒▒▓▓▓▒▓▒▓   ░░▒▓▒▒▒▒░██▒▓▒▓░ ░▒ ░▓░      ░▓░                    \n  ▓▓ ░░▒▒  ▓█     ▓█▓█▒▓░ ░░░▒▒▒▒▒▒▒▓█▓█▒█░    ░█░      ░▓░                    \n  ▓▓       ▓█     ▓█▓█▒█░    ░░  ░▒ ██▓█▒█░    ░▓░      ░▓░                    \n  ▓█       ▒█     ▓█▓█▒▓░    ░░░    ██▓█▒█░    ▒█░       ▓░                    \n  ░▒       ░▒     ▓█▒█▒█▒    ░░░    █▓▒█▒█░     ░                              \n                  ▒█▒█▒░▒    ▒▓▒    █▓▓█▒█░                                    \n                  ▒█▒█░▒░    ▒▒░    ▓▒▒▒░░                                     \n                             ▒▓▒                                               \n                       ░░░░░░▒█▒░░░░░░                                         \n                            ░▓▒▒                                              \n                             ▒▓▒                                               \n");
 	printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
-	printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n", 50);
+	printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 	pauseForEnter();
 	cout << "				 ___________________________\n";
 	cout << "				| NASA RADIO UTILITY, 1998. |\n";
@@ -338,5 +340,7 @@ int main() {
 	pauseForEnter();
 	printWithDelay("//The burn was successful, and we're now on course for an intercept with the TSS. We're just waiting on their own burn.\n\n", 50);
 	this_thread::sleep_for(chrono::milliseconds(1000));
+	animate(L"\n\n\n\n\n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▓▓▒▓▒▓    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n                                               ▓▓▓▓▒▒                                               \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓                                            \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ░▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▓▒        ▒▒▒▒                                   \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▓▓▓▒▒▓▒▒▒▒▒▒▒▓▓▓▓▓                                 \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▒▒▒▓▓▓▓▓                                 \n            ▒▒▒▒▒           ▓ ▓▓▓▓   ▒▒▒▒▓    ▓▓▓▒▒▒▒▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▓▓▓▓       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒        ░░░                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▒▒▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▓▓▓▓▒▓                                              \n                                               ▓▓▓▓▓▓                                               \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▒    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░▒▒▒▒      \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▒▓▓▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      \n");
+
 	return 0;
 }
