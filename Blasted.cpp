@@ -17,7 +17,7 @@ using namespace std;
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep;
-int STATE; 
+bool DEBUG; 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -124,6 +124,24 @@ void connecting() {
 	cout << "\rConnecting...\n";
 	rep = 0;
 } 
+void oxygenTanksAndAirPressure() {
+	int oxygen = 100;
+	while (oxygen > 0) {
+		oxygen -= 1;
+		float pressure = 1.00;
+		cout << "OXYGEN RESERVE TANKS " << oxygen << "% FULL!\n";
+		this_thread::sleep_for(std::chrono::milliseconds(1000));
+		if (oxygen == 0) {
+			rep = 25;
+			while (rep > 0) {
+				rep -= 1;
+				pressure -= 0.01;
+				cout << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)\n";
+				this_thread::sleep_for(std::chrono::milliseconds(250));
+			}
+		}
+	}
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -158,13 +176,13 @@ int main() {
 			if (ch == 13) {  // 13 is the ASCII value for the Enter key, same process with getch
 				cout << "Loading...\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
-				STATE = 0;
+				DEBUG = false;
 				break;
 			}
 			if (ch == 68) {
 				cout << "DEBUG MODE\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
-				STATE = 1;
+				DEBUG = true;
 				break;
 			}
 			else {}
@@ -172,7 +190,7 @@ int main() {
 	}
 	system("cls");
 //STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	if (STATE == 0) {
+	if (DEBUG = false) {
 		string pass;
 		string name;
 		cout << "LOGIN:\n\nUSERNAME\n\n";
@@ -343,6 +361,9 @@ int main() {
 //CURRENTLY DEBUGGING, MOVE UP WHEN DONE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
-	system("pause");
+	pauseForEnter();
+	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n";
+	thread visual(oxygenTanksAndAirPressure);
+	visual.detach();
 	return 0;
 }
