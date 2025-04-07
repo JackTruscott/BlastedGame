@@ -124,24 +124,6 @@ void connecting() {
 	cout << "\rConnecting...\n";
 	rep = 0;
 } 
-void oxygenTanksAndAirPressure() {
-	int oxygen = 100;
-	while (oxygen > 0) {
-		oxygen -= 1;
-		float pressure = 1.00;
-		cout << "OXYGEN RESERVE TANKS " << oxygen << "% FULL!\n";
-		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		if (oxygen == 0) {
-			rep = 25;
-			while (rep > 0) {
-				rep -= 1;
-				pressure -= 0.01;
-				cout << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)\n";
-				this_thread::sleep_for(std::chrono::milliseconds(250));
-			}
-		}
-	}
-}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -363,7 +345,27 @@ int main() {
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
 	pauseForEnter();
 	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n";
-	thread visual(oxygenTanksAndAirPressure);
-	visual.detach();
+	thread timer(qte, 125);
+	timer.detach();
+	int oxygen = 100;
+	while (oxygen > 0) {
+		oxygen -= 1;
+		float pressure = 1.00;
+		cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOXYGEN RESERVE TANKS " << oxygen << "% FULL!\n";
+		this_thread::sleep_for(std::chrono::milliseconds(1000));
+		system("cls");
+		if (oxygen == 0) {
+			rep = 25;
+			while (rep > 0) {
+				rep -= 1;
+				pressure -= 0.01;
+				cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAIR PRESSURE CRITICAL! (" << pressure << " ATM)\n";
+				this_thread::sleep_for(std::chrono::milliseconds(250));
+				system("cls");
+			}
+		}
+	}
+	
+	
 	return 0;
 }
