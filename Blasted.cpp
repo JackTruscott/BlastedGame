@@ -12,12 +12,14 @@
 #include <windows.h>
 #include <fcntl.h>
 #include <io.h>
+#include <mutex>//for background thread printing while the user interacts with the program
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep;
 bool DEBUG; 
+mutex cout_mutex;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -124,6 +126,36 @@ void connecting() {
 	cout << "\rConnecting...\n";
 	rep = 0;
 } 
+string bottomLineANSIWithRefresh1() {
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	int rows = 25; // Default fallback
+	if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+		rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	}
+	// Save cursor, move to bottom-left, clear line, restore cursor
+	return "\033[" + std::to_string(rows) + ";1H\033[2K";
+}
+string bottomLineANSIWithRefresh2() {
+	return "\033[u";
+}
+void part2Timer() {
+	int oxygen = 100;
+	while (oxygen > 0) {
+		oxygen -= 1;
+		float pressure = 1.00;
+		cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
+		this_thread::sleep_for(std::chrono::milliseconds(1000));
+		if (oxygen == 0) {
+			rep = 25;
+			while (rep > 0) {
+				rep -= 1;
+				pressure -= 0.01;
+				cout << bottomLineANSIWithRefresh1() << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)" << bottomLineANSIWithRefresh2();
+				this_thread::sleep_for(std::chrono::milliseconds(250));
+			}
+		}
+	}
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -347,25 +379,11 @@ int main() {
 	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n";
 	thread timer(qte, 125);
 	timer.detach();
-	int oxygen = 100;
-	while (oxygen > 0) {
-		oxygen -= 1;
-		float pressure = 1.00;
-		cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOXYGEN RESERVE TANKS " << oxygen << "% FULL!\n";
-		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		system("cls");
-		if (oxygen == 0) {
-			rep = 25;
-			while (rep > 0) {
-				rep -= 1;
-				pressure -= 0.01;
-				cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAIR PRESSURE CRITICAL! (" << pressure << " ATM)\n";
-				this_thread::sleep_for(std::chrono::milliseconds(250));
-				system("cls");
-			}
-		}
-	}
-	
+	thread p2(part2Timer);
+	p2.detach();
+	string test;
+	cin >> test;
+	cout << test;
 	
 	return 0;
 }
