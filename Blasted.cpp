@@ -18,8 +18,10 @@ using namespace std;
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep;
-bool DEBUG; 
+bool DEBUG = false; 
 mutex cout_mutex;
+string pass;
+string name;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -133,17 +135,24 @@ string bottomLineANSIWithRefresh1() {
 		rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	}
 	// Save cursor, move to bottom-left, clear line, restore cursor
-	return "\033[" + std::to_string(rows) + ";1H\033[2K";
+	return "\033[s\033[" + std::to_string(rows) + ";1H\033[2K";
 }
 string bottomLineANSIWithRefresh2() {
 	return "\033[u";
+}
+void beepLoop() {
+	Beep(750, 300);
+	this_thread::sleep_for(chrono::milliseconds(250));
 }
 void part2Timer() {
 	int oxygen = 100;
 	while (oxygen > 0) {
 		oxygen -= 1;
 		float pressure = 1.00;
+		lock_guard<mutex> guard(cout_mutex);
 		cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
+		thread sound(beepLoop);
+		sound.detach();
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		if (oxygen == 0) {
 			rep = 25;
@@ -151,6 +160,8 @@ void part2Timer() {
 				rep -= 1;
 				pressure -= 0.01;
 				cout << bottomLineANSIWithRefresh1() << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)" << bottomLineANSIWithRefresh2();
+				thread sound(beepLoop);
+				sound.detach();
 				this_thread::sleep_for(std::chrono::milliseconds(250));
 			}
 		}
@@ -187,13 +198,13 @@ int main() {
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				exit(0);
 			}
-			if (ch == 13) {  // 13 is the ASCII value for the Enter key, same process with getch
+			else if (ch == 13) {  // 13 is the ASCII value for the Enter key, same process with getch
 				cout << "Loading...\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				DEBUG = false;
 				break;
 			}
-			if (ch == 68) {
+			else if (ch == 68) {
 				cout << "DEBUG MODE\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				DEBUG = true;
@@ -204,9 +215,7 @@ int main() {
 	}
 	system("cls");
 //STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	if (DEBUG = false) {
-		string pass;
-		string name;
+	if (DEBUG == false) {
 		cout << "LOGIN:\n\nUSERNAME\n\n";
 		cin >> name;
 		cout << "\nPASSWORD\n\n";
@@ -365,6 +374,7 @@ int main() {
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		cout << "PRESS SPACE NOW!\n";
 		qte(1);
+		system("cls");
 		nasaRadioUtility();
 		printWithDelay("INBOUND: 'ISS, this is Tiangong. We are initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Burn complete. We are on course to intercept.'\n\n", 150);
 		printWithDelay("OUTBOUND: 'Copy, Tiangong. See you on the other side.'\n\n", 150);
@@ -376,14 +386,35 @@ int main() {
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
 	pauseForEnter();
-	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n";
+	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n\n";
 	thread timer(qte, 125);
 	timer.detach();
 	thread p2(part2Timer);
 	p2.detach();
-	string test;
-	cin >> test;
-	cout << test;
-	
+	cout << "PRESSURE DROP DETECTED IN JEM MODULE!\n\n";
+	cout << "MANUAL OVERRIDE REQUIRED TO CLOSE ACCESS!\n\n";
+	cout << "USERNAME\n\n";
+	string usercheck;
+	string userpasscheck;
+	cin >> usercheck;
+	while (usercheck != name || userpasscheck != pass) {
+		if (usercheck == name) {
+			cout << "PASSWORD\n\n";
+			cin >> userpasscheck;
+			if (userpasscheck == pass) {
+				cout << "you didn't die!\n";
+			}
+			else {
+				cout << "PASSWORD INCORRECT.\n";
+				cin >> userpasscheck;
+				system("cls");
+			}
+		}
+		else {
+			cout << "USER NOT FOUND.\n\n";
+			cin >> usercheck;
+			system("cls");
+		}
+	}
 	return 0;
 }
