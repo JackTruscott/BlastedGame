@@ -20,7 +20,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="windows.h">
+    <ClInclude Include="Title.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ManySuns.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TheBurns.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

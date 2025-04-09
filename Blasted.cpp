@@ -13,21 +13,67 @@
 #include <fcntl.h>
 #include <io.h>
 #include <mutex>//for background thread printing while the user interacts with the program
+#include "Title.h"//title music
+#include "ManySuns.h"//story music
+#include "TheBurns.h"//part 2 music
+#pragma comment(lib, "winmm.lib")  // Link against winmm.lib
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep;
-bool DEBUG = false; 
+bool DEBUG = false;
+int state = 1;
 mutex cout_mutex;
 string pass;
 string name;
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void playAudio(const unsigned char* audioData, unsigned int dataSize) {
+	// Play sound from memory (using LPCSTR)
+	if (PlaySoundA(reinterpret_cast<LPCSTR>(audioData), NULL, SND_MEMORY | SND_ASYNC)) {}
+	else { 
+		std::cout << "SOUND ERROR: " << GetLastError() << endl;
+	}
+}
+void titleLoop() {
+	while (state == 1) {
+		playAudio(Title, TitleSize);
+		if (state == 2) {
+			break;
+		}
+		else {
+			this_thread::sleep_for(chrono::seconds(104));
+		}
+	}
+}
+void storyLoop() {
+	while (state == 2) {
+		playAudio(ManySuns, ManySunsSize);
+		if (state == 3) {
+			break;
+		}
+		else {
+			this_thread::sleep_for(chrono::seconds(104));
+		}
+	}
+}
+void part2Loop() {
+	while (state == 4) {
+		playAudio(TheBurns, TheBurnsSize);
+		if (state == 5) {
+			break;
+		}
+		else {
+			this_thread::sleep_for(chrono::seconds(104));
+		}
+	}
+}
 void printWithDelay(const string& str, int delay_ms) {
 	for (char c : str) {
-		cout << c; this_thread::sleep_for(chrono::milliseconds(delay_ms));
+		std::cout << c; this_thread::sleep_for(chrono::milliseconds(delay_ms));
 	}
 }
 void animate(const wstring& wideString) {
@@ -62,7 +108,7 @@ void animate(const wstring& wideString) {
 		char* multiByteString = new char[bufferSize];
 		WideCharToMultiByte(CP_UTF8, 0, shiftedString.c_str(), -1, multiByteString, bufferSize, nullptr, nullptr);
 
-		cout << multiByteString << endl;
+		std::cout << multiByteString << endl;
 		delete[] multiByteString;
 		Sleep(speed);
 	}
@@ -76,7 +122,7 @@ void wcoutForWindowsCMD(const wchar_t* wideString) {
 
 	WideCharToMultiByte(CP_UTF8, 0, wideString, -1, multiByteString, bufferSize, nullptr, nullptr); // Converts my unicode text from UTF-16 to UTF-8
 
-	cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
+	std::cout << multiByteString << std::endl; // Outputs the newly converted text in the output buffer
 
 	delete[] multiByteString;
 }
@@ -98,7 +144,7 @@ int qte(int timeoutSeconds) {
 	while (true) {
 		// Check if 3 seconds have passed
 		if (((clock() - startTime) / CLOCKS_PER_SEC) >= timeoutSeconds) {
-			cout << "Something very, very bad just happened...\n";
+			std::cout << "Something very, very bad just happened...\n";
 			exit(0);  // Timeout failure
 		}
 		// Check if a key is pressed
@@ -111,21 +157,21 @@ int qte(int timeoutSeconds) {
 	}
 }
 void nasaRadioUtility() {
-	cout << "				 ___________________________\n";
-	cout << "				| NASA RADIO UTILITY, 1998. |\n";
+	std::cout << "				 ___________________________\n";
+	std::cout << "				| NASA RADIO UTILITY, 1998. |\n";
 	wcoutForWindowsCMD(L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n");
 }
 void connecting() {
-	cout << "Connecting";
+	std::cout << "Connecting";
 	while (rep < 3) {
 		this_thread::sleep_for(std::chrono::milliseconds(500));
 		printWithDelay("...", 500);
-		cout << "\033[11G";
-		cout << "   ";
-		cout << "\033[11G";
+		std::cout << "\033[11G";
+		std::cout << "   ";
+		std::cout << "\033[11G";
 		rep++;
 	}
-	cout << "\rConnecting...\n";
+	std::cout << "\rConnecting...\n";
 	rep = 0;
 } 
 string bottomLineANSIWithRefresh1() {
@@ -142,15 +188,16 @@ string bottomLineANSIWithRefresh2() {
 }
 void beepLoop() {
 	Beep(750, 300);
+	Beep(650, 200);
 	this_thread::sleep_for(chrono::milliseconds(250));
 }
 void part2Timer() {
 	int oxygen = 100;
 	while (oxygen > 0) {
 		oxygen -= 1;
-		float pressure = 1.00;
+		double pressure = 1.00;
 		lock_guard<mutex> guard(cout_mutex);
-		cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
+		std::cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
 		thread sound(beepLoop);
 		sound.detach();
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -159,7 +206,7 @@ void part2Timer() {
 			while (rep > 0) {
 				rep -= 1;
 				pressure -= 0.01;
-				cout << bottomLineANSIWithRefresh1() << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)" << bottomLineANSIWithRefresh2();
+				std::cout << bottomLineANSIWithRefresh1() << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)" << bottomLineANSIWithRefresh2();
 				thread sound(beepLoop);
 				sound.detach();
 				this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -172,40 +219,42 @@ void part2Timer() {
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
 //TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	SetConsoleOutputCP(CP_UTF8);//allows the program to output unicode characters required for the title screen to properly display
+	SetConsoleOutputCP(CP_UTF8);
+	thread music(titleLoop);
+	music.detach();//allows the program to output unicode characters required for the title screen to properly display
 	//displays connecting message
 	connecting();
 	//prints first message, and resets repeat counter variable, and pauses code for 1500 ms.	
-	cout << "ERR: No radio contact with default channel. Retrying with backup...\n";
+	std::cout << "ERR: No radio contact with default channel. Retrying with backup...\n";
 	this_thread::sleep_for(std::chrono::milliseconds(1500));
 	connecting();
 	//displays message of switching to radio mode.
-	cout << "WARN: Backup connection failed. Switching to scan mode";
+	std::cout << "WARN: Backup connection failed. Switching to scan mode";
 	printWithDelay("...", 500);
 	this_thread::sleep_for(std::chrono::milliseconds(250));
-	cout << "Done.\n\n";
+	std::cout << "Done.\n\n";
 	this_thread::sleep_for(std::chrono::milliseconds(1000));
 	wcoutForWindowsCMD(L"░▒▓███████▓▒░ ░▒▓█▓▒░         ░▒▓███████▓▒░ ░▒▓████████▓▒░ ░▒▓████████▓▒░   ░▒▓███████▓▒░   ░▒▓███████▓▒░\n░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░            ░▒▓█▓▒░      ░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒ ░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░      ░▒▓█▓▒░        ░▒▓█▓▒░░░▒▓█▓▒░\n ░▒▓███████▓▒░░▒▓█▓▒░         ░▒▓████████▓▒░ ░▒▓██████▓▒░       ░▒▓█▓▒░      ░▒▓██████▓▒░    ░▒▓█▓▒░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░         ░▒▓█▓▒░     ░▒▓█▓▒░     ░▒▓█▓▒░         ░▒▓█▓▒░░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒░ ▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░         ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░          ░▒▓█▓▒░░▒▓█▓▒░\n░▒▓███████▓▒░ ░▒▓████████▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓███████▓▒░       ░▒▓█▓▒░      ░▒▓████████▓▒░   ░▒▓███████▓▒░\n");
 	this_thread::sleep_for(std::chrono::milliseconds(1000));//full chunk displays title, and waits 1000 ms. //this segment was generated by AI, and edited by me.
 	//displays subtitle
-	cout << "A SHORT TEXT BASED PUZZLE GAME BY JACK TRUSCOTT\n\n";
-	cout << "PRESS ENTER TO BEGIN, OR ESC TO QUIT\n";
+	std::cout << "A SHORT TEXT BASED PUZZLE GAME BY JACK TRUSCOTT\n\n";
+	std::cout << "PRESS ENTER TO BEGIN, OR ESC TO QUIT\n";
 	while (true) {
 		if (_kbhit()) {  // Check if a key has been pressed
 			char ch = _getch();  // Get the pressed key's ascii value
 			if (ch == 27) {  // 27 is the ASCII value for the Escape key, so when getch tells the computer the value is 27, this code runs
-				cout << "Exiting...\n\n";
+				std::cout << "Exiting...\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				exit(0);
 			}
 			else if (ch == 13) {  // 13 is the ASCII value for the Enter key, same process with getch
-				cout << "Loading...\n\n";
+				std::cout << "Loading...\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				DEBUG = false;
 				break;
 			}
 			else if (ch == 68) {
-				cout << "DEBUG MODE\n\n";
+				std::cout << "DEBUG MODE\n\n";
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				DEBUG = true;
 				break;
@@ -216,25 +265,25 @@ int main() {
 	system("cls");
 //STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	if (DEBUG == false) {
-		cout << "LOGIN:\n\nUSERNAME\n\n";
+		std::cout << "LOGIN:\n\nUSERNAME\n\n";
 		cin >> name;
-		cout << "\nPASSWORD\n\n";
+		std::cout << "\nPASSWORD\n\n";
 		cin >> pass;
-		cout << "Loading user data...";
+		std::cout << "Loading user data...";
 		this_thread::sleep_for(std::chrono::milliseconds(1500));
-		cout << "Done.\n";
+		std::cout << "Done.\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		system("cls");
 		this_thread::sleep_for(std::chrono::milliseconds(1500));
 		printWithDelay("cd\\home\\" + name + "\\documents\\logs\\2034\\april\\\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(500));
-		cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
+		std::cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("ls\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1500));
-		cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
+		std::cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(100));
-		cout << "1.txt	2.txt	3.txt	4.txt	5.txt	6.txt	7.txt\n\n\n\n";
+		std::cout << "1.txt	2.txt	3.txt	4.txt	5.txt	6.txt	7.txt\n\n\n\n";
 		string file;
 		cin >> file;
 		rep = 0;
@@ -248,6 +297,9 @@ int main() {
 				if (rep < 7) { cin >> file; }
 			}
 			else if (file.find("2.txt") != string::npos) {
+				state = 2;
+				thread music(storyLoop);
+				music.detach();
 				ofstream outFile("2.txt");
 				outFile << "Personal log 04/02/2034\nToday's task was to power down the life support systems. It's a delicate process - closing down the oxygen generators and thermal regulation, making sure there are no leaks. The same checks we've done a thousand times. But as I reach for the switch, the comms crackle unexpectedly. At first, it's just static - fragments of voices breaking through the noise. We're used to occasional glitches, but this feels different. Then the transmission cuts out entirely. The static lingers longer than it should, and we sit in silence, waiting for any response. But there's nothing. We can still hear each other in the station, but no word from ground control. A strange sense of unease settles over us. We've been trained for emergencies, but this doesn't feel like one. Something is off." << endl;
 				outFile.close();
@@ -299,7 +351,7 @@ int main() {
 				rep = 7;
 			}
 			else {
-				cout << "Could not find the file specified.\n";
+				std::cout << "Could not find the file specified.\n";
 				cin >> file;
 			}
 		}
@@ -313,32 +365,35 @@ int main() {
 		pauseForEnter();
 		system("cls");
 		nasaRadioUtility();
-		cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
+		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		printWithDelay("OUTBOUND: 'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
 		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' \n\n", 150);
 		pauseForEnter();
 		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
-		cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
+		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		cin >> shift;
 		while (shift != 3) {
 			cin >> shift;
 			if (cin.fail()) {
 				cin.clear();
 				cin.ignore(10000, '\n');
-				cout << "\nERR: INPUT INVALID.\n\n";
+				std::cout << "\nERR: INPUT INVALID.\n\n";
 			}
 			else {
-				cout << "\n ERR: WEAK OR NO SIGNAL DETECTED.";
+				std::cout << "\n ERR: WEAK OR NO SIGNAL DETECTED.";
 			}
 		}
-		cout << "\nINFO: STABLE SIGNAL ESTABLISHED. MAINTAIN 3 DEGREES (SET ANGLE) FOR OPTIMAL CONNECTION.\n\n";
+		std::cout << "\nINFO: STABLE SIGNAL ESTABLISHED. MAINTAIN 3 DEGREES (SET ANGLE) FOR OPTIMAL CONNECTION.\n\n";
 		printWithDelay("\nINBOUND: 'ISS, we have solid copy! This is Tiangong, we read!'\n\n", 150);
 		pauseForEnter();
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
+		state = 4;
+		thread music(part2Loop);
+		music.detach();
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
@@ -346,15 +401,15 @@ int main() {
 		printWithDelay("INBOUND: 'ISS, we read you loud and clear.'\n\n", 150);
 		printWithDelay("OUTBOUND: 'Copy, Tiangong. We're burning on schedule. Standby.\n\n", 150);
 		pauseForEnter();
-		cout << "ENGINE START...\n";
+		std::cout << "ENGINE START...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "IGNITION...\n";
+		std::cout << "IGNITION...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "PRESS SPACE IN 3s OR LESS TO ENGAGE.\n";
+		std::cout << "PRESS SPACE IN 3s OR LESS TO ENGAGE.\n";
 		qte(3);
-		cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
+		std::cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "PRESS SPACE NOW!\n";
+		std::cout << "PRESS SPACE NOW!\n";
 		qte(1);
 		system("cls");
 		nasaRadioUtility();
@@ -364,15 +419,15 @@ int main() {
 		animate(L"\n\n\n\n\n                                                                 ▒▒░░░░░░░▒░░░░░░░▒▓▒░░░▒▒░░▒░░                                                       \n                                                               ░░▒▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒░░░                                                      \n                                                              ░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░                                                       \n                                                              ░░ ░▒▒░▒▒░▒▒▒▒░░░░░░░░░░░░▒ ▒▒░                               ░                         \n                                    ░░░░░░                   ░▒▒▒░░░▒░▒▒▒▒▒▒░             ░░░                     ░▒▒░░░  ░░▒▒░░░                     \n                           ░░░▒▒░░░░▒░░░▒▒▒▓▒░   ░░           ░▒▒▓▒▒░░░░▒▒▒▒░  ░░░   ░          ░░░░▒▒░ ░░░▒░░░░░░░▒░▒▒▒░░░░▒▒░▒▒░░                   \n                ░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▓▒▓▒▒▒▒▓▓▓▒▒▓▓▒▒▓▓▓▓▓▒▒▒▒▒▒▒▓▓▒▒▒▒▒▓▓▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▒▒▒▒▒▒▒░░░░▒▓▓▒▒▒▒▒▒▒░░░░░░░▒░░░                   \n           ░▒▒▒▒▒▒▒▒▒▒▒░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░▓▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒░░░▒▒▒▒░░░░░░░░░░▒░░░░░               \n              ░▒▒▒░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▒▒░░▒▒▒▒▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒░░░▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒  ░▒▒▒░░▓▓▒       ░░░░▒▒▒░░         ░░░░░░░              \n                ░░░▒▒▒▒▒▒▒▒░░░▒▓▒░░░▒▒▒▒▒▒░░▓▓▓░░░░░░▒▒▒▓▒▒▓▓▒▒▒▒ ░░░▒▒▒▒▒▒▒▒▓▓▒▒▒▓▓▓▓▒▓▓▒▒▒▒░  ░░░ ░▓▓▒          ░▒▒▒░                               \n                     ░░░░    ░▒▓▒ ░▒░▒▒▒▒░░░▒▓▓░      ░▒▓▓▒▓▓▒▒▒▒░░▒▒▒░░▒▒▒▒▒▒▒░▒▒▒▒▒▓▒▓▓░▒▓▒░      ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▒░░▒▒▒░    ░▒▓▓░      ░▒▓▓▒▓▓▒▒▓▒░  ░░░░▒▒▒░░░░▒▒░░▓▓▓▒▓▓▒▓▓▒       ░▒▓▒           ▒▒▒░                               \n                             ░▒▒▒░ ░░      ░▒▓▓░      ░▒▓▓▒▓▓▒▒▓▓░   ░░░░░░░░░░▒▒▒░▒▒▒▒▓▓▒▓▓▒       ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▒░         ░▒▓▓░      ░▒▓▓▒▒▒▒▒▓▒░     ░░▒▒▒░     ░▓▓▒▒▓▓░▓▓▒       ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▓░         ░▒▓▓▒      ░▒▓▓▒▓▓▒▒▓▒░   ░░░░░░▒░░░   ░▓▓▒▒▓▓▒▓▓▒       ░▒▒▒           ░░░░                               \n                                ░                     ░▒▓▓▒▓▓▒▒▓▒░  ░░░░▒▒▒▒░░░░  ░▓▓▒▒▓▓░▒▓▒                                                         \n                                                      ░▒▓▓▒▓▓▒░░▒░      ▒▒▒▒▒░    ░▓▓▒▒▓▓░▓▓▒                                                         \n                                                      ░▒▓▓▒▓▓▒▒▒▒░     ░▒▒▒▒░░░   ░▓▒▒▒▒▓░▒▓▒                                                         \n                                                      ░▒▓▓▒▒▒░░░░░   ░░░░▒▒▒░░    ░▒░░░░░░░░░                                                         \n                                                                     ░░░▒▒▒▒░░                                                                        \n                                                             ░░░░░░░░░░░▒▒▒▒░░░░░░░░░░                                                                \n                                                           ░░░░▒▒▒▒▒▒▒░░▒▓▓▓░▒▒▒░▒░░░░░░░                                                             \n                                                              ░░░░░░░░░░░▒▒▒▒░░░░░░░░░                                                                \n                                                                       ░▒▒▒▒░░░                                                                       \n                                                                       ░▒▒▒▒░                                                                         \n                                                                     ░░░░░░▒░                                                                         \n                                                                      ░ ░░░░                                                                          \n                                                                      ░░▒░░░░                                                                         \n                                                                        ░░▒▒▒░░                                                                       \n");
 		printWithDelay("//The burn was successful, and we're now on course for an intercept with the TSS. We're just waiting on their own burn.\n\n", 50);
 		pauseForEnter();
-		cout << "ENGINE START...\n";
+		std::cout << "ENGINE START...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "IGNITION...\n";
+		std::cout << "IGNITION...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "PRESS SPACE IN 2s OR LESS TO ENGAGE.\n";
+		std::cout << "PRESS SPACE IN 2s OR LESS TO ENGAGE.\n";
 		qte(2);
-		cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
+		std::cout << "IGNITION ENGAGED. PRIMING FUEL SYSTEM...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
-		cout << "PRESS SPACE NOW!\n";
+		std::cout << "PRESS SPACE NOW!\n";
 		qte(1);
 		system("cls");
 		nasaRadioUtility();
@@ -386,32 +441,32 @@ int main() {
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
 	pauseForEnter();
-	cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n\n";
+	std::cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n\n";
 	thread timer(qte, 125);
 	timer.detach();
 	thread p2(part2Timer);
 	p2.detach();
-	cout << "PRESSURE DROP DETECTED IN JEM MODULE!\n\n";
-	cout << "MANUAL OVERRIDE REQUIRED TO CLOSE ACCESS!\n\n";
-	cout << "USERNAME\n\n";
+	std::cout << "PRESSURE DROP DETECTED IN JEM MODULE!\n\n";
+	std::cout << "MANUAL OVERRIDE REQUIRED TO CLOSE ACCESS!\n\n";
+	std::cout << "USERNAME\n\n";
 	string usercheck;
 	string userpasscheck;
 	cin >> usercheck;
 	while (usercheck != name || userpasscheck != pass) {
 		if (usercheck == name) {
-			cout << "PASSWORD\n\n";
+			std::cout << "PASSWORD\n\n";
 			cin >> userpasscheck;
 			if (userpasscheck == pass) {
-				cout << "you didn't die!\n";
+				std::cout << "you didn't die!\n";
 			}
 			else {
-				cout << "PASSWORD INCORRECT.\n";
+				std::cout << "PASSWORD INCORRECT.\n";
 				cin >> userpasscheck;
 				system("cls");
 			}
 		}
 		else {
-			cout << "USER NOT FOUND.\n\n";
+			std::cout << "USER NOT FOUND.\n\n";
 			cin >> usercheck;
 			system("cls");
 		}
