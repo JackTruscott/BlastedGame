@@ -16,6 +16,8 @@
 #include "Title.h"//title music
 #include "ManySuns.h"//story music
 #include "TheBurns.h"//part 2 music
+#include "Ham.h" //part 1 music
+#include "Vacuum.h" //part 3 music
 #pragma comment(lib, "winmm.lib")  // Link against winmm.lib
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -60,10 +62,32 @@ void storyLoop() {
 		}
 	}
 }
+void part1Loop() {
+	while (state == 3) {
+		playAudio(Ham, HamSize);
+		if (state == 4) {
+			break;
+		}
+		else {
+			this_thread::sleep_for(chrono::seconds(104));
+		}
+	}
+}
 void part2Loop() {
 	while (state == 4) {
 		playAudio(TheBurns, TheBurnsSize);
 		if (state == 5) {
+			break;
+		}
+		else {
+			this_thread::sleep_for(chrono::seconds(104));
+		}
+	}
+}
+void part3Loop() {
+	while (state == 5) {
+		playAudio(Vacuum, VacuumSize);
+		if (state == 6) {
 			break;
 		}
 		else {
@@ -191,18 +215,18 @@ void beepLoop() {
 	Beep(650, 200);
 	this_thread::sleep_for(chrono::milliseconds(250));
 }
-void part2Timer() {
+void part3Timer() {
 	int oxygen = 100;
+	double pressure = 1.00;
+	rep = 25;
 	while (oxygen > 0) {
 		oxygen -= 1;
-		double pressure = 1.00;
 		lock_guard<mutex> guard(cout_mutex);
 		std::cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
 		thread sound(beepLoop);
 		sound.detach();
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		if (oxygen == 0) {
-			rep = 25;
 			while (rep > 0) {
 				rep -= 1;
 				pressure -= 0.01;
@@ -211,6 +235,8 @@ void part2Timer() {
 				sound.detach();
 				this_thread::sleep_for(std::chrono::milliseconds(250));
 			}
+			cout << "Something very, very bad just happened...\n";
+			exit(0);
 		}
 	}
 }
@@ -220,8 +246,8 @@ void part2Timer() {
 int main() {
 //TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
-	thread music(titleLoop);
-	music.detach();//allows the program to output unicode characters required for the title screen to properly display
+	thread t1(titleLoop);
+	t1.detach();//allows the program to output unicode characters required for the title screen to properly display
 	//displays connecting message
 	connecting();
 	//prints first message, and resets repeat counter variable, and pauses code for 1500 ms.	
@@ -298,8 +324,8 @@ int main() {
 			}
 			else if (file.find("2.txt") != string::npos) {
 				state = 2;
-				thread music(storyLoop);
-				music.detach();
+				thread t2(storyLoop);
+				t2.detach();
 				ofstream outFile("2.txt");
 				outFile << "Personal log 04/02/2034\nToday's task was to power down the life support systems. It's a delicate process - closing down the oxygen generators and thermal regulation, making sure there are no leaks. The same checks we've done a thousand times. But as I reach for the switch, the comms crackle unexpectedly. At first, it's just static - fragments of voices breaking through the noise. We're used to occasional glitches, but this feels different. Then the transmission cuts out entirely. The static lingers longer than it should, and we sit in silence, waiting for any response. But there's nothing. We can still hear each other in the station, but no word from ground control. A strange sense of unease settles over us. We've been trained for emergencies, but this doesn't feel like one. Something is off." << endl;
 				outFile.close();
@@ -356,6 +382,9 @@ int main() {
 			}
 		}
 		system("cls");
+		state = 3;
+		thread t3(part1Loop);
+		t3.detach();
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
@@ -390,10 +419,10 @@ int main() {
 		pauseForEnter();
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
-		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		state = 4;
-		thread music(part2Loop);
-		music.detach();
+		thread t4(part2Loop);
+		t4.detach();
+		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
@@ -438,13 +467,16 @@ int main() {
 		animate(L"\n\n\n\n\n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▓▓▒▓▒▓    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n                                               ▓▓▓▓▒▒                                               \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓                                            \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ░▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▓▒        ▒▒▒▒                                   \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▓▓▓▒▒▓▒▒▒▒▒▒▒▓▓▓▓▓                                 \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▒▒▒▓▓▓▓▓                                 \n            ▒▒▒▒▒           ▓ ▓▓▓▓   ▒▒▒▒▓    ▓▓▓▒▒▒▒▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▓▓▓▓       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒        ░░░                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▒▒▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▓▓▓▓▒▓                                              \n                                               ▓▓▓▓▓▓                                               \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▒    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░▒▒▒▒      \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▒▓▓▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      \n");
 	}
 //CURRENTLY DEBUGGING, MOVE UP WHEN DONE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	state = 5;
+	thread t5(part3Loop);
+	t5.detach();
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
 	pauseForEnter();
 	std::cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n\n";
 	thread timer(qte, 125);
 	timer.detach();
-	thread p2(part2Timer);
+	thread p2(part3Timer);
 	p2.detach();
 	std::cout << "PRESSURE DROP DETECTED IN JEM MODULE!\n\n";
 	std::cout << "MANUAL OVERRIDE REQUIRED TO CLOSE ACCESS!\n\n";

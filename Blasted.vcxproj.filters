@@ -29,5 +29,11 @@
     <ClInclude Include="TheBurns.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Ham.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vacuum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
