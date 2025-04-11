@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <mutex>//for background thread printing while the user interacts with the program
+#include <vector>
 #include "Title.h"//title music
 #include "ManySuns.h"//story music
 #include "TheBurns.h"//part 2 music
@@ -23,13 +24,16 @@ using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int rep;
+int rep = 0;
+int repthread = 0;
 bool DEBUG = false;
 int state = 1;
 mutex cout_mutex;
+mutex audio_mem;
 string pass;
 string name;
-
+atomic<bool> running = true;
+vector <thread> threads;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -40,64 +44,123 @@ void playAudio(const unsigned char* audioData, unsigned int dataSize) {
 		std::cout << "SOUND ERROR: " << GetLastError() << endl;
 	}
 }
-void titleLoop() {
-	while (state == 1) {
-		playAudio(Title, TitleSize);
-		if (state == 2) {
-			break;
+void partNegative1Loop() {
+	const int musicInterval = 109000; // 104 seconds in milliseconds
+	int elapsedTime = 0;
+	while (state == 1 && running) {
+		if (elapsedTime == 0) {
+			// Play the embedded music data
+			playAudio(Title, TitleSize);
 		}
-		else {
-			this_thread::sleep_for(chrono::seconds(104));
+		// Sleep in short bursts to stay responsive to state changes
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		elapsedTime += 500;
+
+		// When 104 seconds pass, reset timer to replay music
+		if (elapsedTime >= musicInterval) {
+			elapsedTime = 0;
 		}
+
+		// break in case something changes mid-loop
+		if (state != 1 || !running) break;
 	}
 }
-void storyLoop() {
-	while (state == 2) {
-		playAudio(ManySuns, ManySunsSize);
-		if (state == 3) {
-			break;
+void part0Loop() {
+	const int musicInterval = 97000; // 92 seconds in milliseconds
+	int elapsedTime = 0;
+
+	while (state == 2 && running) {
+		if (elapsedTime == 0) {
+			// Play the embedded music data
+			playAudio(ManySuns, ManySunsSize);
 		}
-		else {
-			this_thread::sleep_for(chrono::seconds(104));
+
+		// Sleep in short bursts to stay responsive
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		elapsedTime += 500;
+
+		// When 104 seconds pass, reset timer to replay music
+		if (elapsedTime >= musicInterval) {
+			elapsedTime = 0;
 		}
+
+		// Optional break in case something changes mid-loop
+		if (state != 2 || !running) break;
 	}
 }
 void part1Loop() {
-	while (state == 3) {
-		playAudio(Ham, HamSize);
-		if (state == 4) {
-			break;
+	const int musicInterval = 159000; // 154 seconds in milliseconds
+	int elapsedTime = 0;
+
+	while (state == 3 && running) {
+		if (elapsedTime == 0) {
+			// Play the embedded music data
+			playAudio(Ham, HamSize);
 		}
-		else {
-			this_thread::sleep_for(chrono::seconds(104));
+
+		// Sleep in short bursts to stay responsive
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		elapsedTime += 500;
+
+		// When 104 seconds pass, reset timer to replay music
+		if (elapsedTime >= musicInterval) {
+			elapsedTime = 0;
 		}
+
+		// Optional break in case something changes mid-loop
+		if (state != 3 || !running) break;
 	}
 }
 void part2Loop() {
-	while (state == 4) {
-		playAudio(TheBurns, TheBurnsSize);
-		if (state == 5) {
-			break;
+	const int musicInterval = 103000;
+	int elapsedTime = 0;
+
+	while (state == 4 && running) {
+		if (elapsedTime == 0) {
+			// Play the embedded music data
+			playAudio(TheBurns, TheBurnsSize);
 		}
-		else {
-			this_thread::sleep_for(chrono::seconds(104));
+
+		// Sleep in short bursts to stay responsive
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		elapsedTime += 500;
+
+		// When 104 seconds pass, reset timer to replay music
+		if (elapsedTime >= musicInterval) {
+			elapsedTime = 0;
 		}
+
+		// Optional break in case something changes mid-loop
+		if (state != 4 || !running) break;
 	}
 }
 void part3Loop() {
-	while (state == 5) {
-		playAudio(Vacuum, VacuumSize);
-		if (state == 6) {
-			break;
+	const int musicInterval = 88000; // 88 seconds in milliseconds
+	int elapsedTime = 0;
+
+	while (state == 5 && running) {
+		if (elapsedTime == 0) {
+			// Play the embedded music data
+			playAudio(Vacuum, VacuumSize);
 		}
-		else {
-			this_thread::sleep_for(chrono::seconds(104));
+
+		// Sleep in short bursts to stay responsive
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		elapsedTime += 500;
+
+		// When 104 seconds pass, reset timer to replay music
+		if (elapsedTime >= musicInterval) {
+			elapsedTime = 0;
 		}
+
+		// Optional break in case something changes mid-loop
+		if (state != 5 || !running) break;
 	}
 }
-void printWithDelay(const string& str, int delay_ms) {
-	for (char c : str) {
-		std::cout << c; this_thread::sleep_for(chrono::milliseconds(delay_ms));
+void printWithDelay(const string& text, int delayMs) {
+	for (char c : text) {
+		cout << c << flush;
+		this_thread::sleep_for(chrono::milliseconds(delayMs));
 	}
 }
 void animate(const wstring& wideString) {
@@ -169,7 +232,15 @@ int qte(int timeoutSeconds) {
 		// Check if 3 seconds have passed
 		if (((clock() - startTime) / CLOCKS_PER_SEC) >= timeoutSeconds) {
 			std::cout << "Something very, very bad just happened...\n";
-			exit(0);  // Timeout failure
+			pauseForEnter();
+			running = false;
+			for (auto& t : threads) {
+				if (t.joinable()) {
+					t.join();  // Blocks the main thread until the current thread finishes, aids in swift shutdown
+				}
+			}
+			exit(0);
+			  // Timeout failure
 		}
 		// Check if a key is pressed
 		if (_kbhit()) {
@@ -210,11 +281,6 @@ string bottomLineANSIWithRefresh1() {
 string bottomLineANSIWithRefresh2() {
 	return "\033[u";
 }
-void beepLoop() {
-	Beep(750, 300);
-	Beep(650, 200);
-	this_thread::sleep_for(chrono::milliseconds(250));
-}
 void part3Timer() {
 	int oxygen = 100;
 	double pressure = 1.00;
@@ -223,20 +289,34 @@ void part3Timer() {
 		oxygen -= 1;
 		lock_guard<mutex> guard(cout_mutex);
 		std::cout << bottomLineANSIWithRefresh1() << "OXYGEN RESERVE TANKS " << oxygen << " % FULL!" << bottomLineANSIWithRefresh2();
-		thread sound(beepLoop);
-		sound.detach();
+		thread beep1([] { Beep(750, 250); });
+		beep1.detach();
+		this_thread::sleep_for(std::chrono::milliseconds(50));
+		thread beep2([] { Beep(650, 200); });
+		beep2.detach();
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		if (oxygen == 0) {
 			while (rep > 0) {
 				rep -= 1;
 				pressure -= 0.01;
 				std::cout << bottomLineANSIWithRefresh1() << "AIR PRESSURE CRITICAL! (" << pressure << " ATM)" << bottomLineANSIWithRefresh2();
-				thread sound(beepLoop);
-				sound.detach();
+				thread beep3([] { Beep(750, 100); });
+				beep3.detach();
+				this_thread::sleep_for(std::chrono::milliseconds(50));
+				thread beep4([] { Beep(650, 100); });
+				beep4.detach();
 				this_thread::sleep_for(std::chrono::milliseconds(250));
 			}
 			cout << "Something very, very bad just happened...\n";
+			pauseForEnter();
+			running = false;
+			for (auto& t : threads) {
+				if (t.joinable()) {
+					t.join();  // Blocks the main thread until the current thread finishes, aids in swift shutdown
+				}
+			}
 			exit(0);
+			
 		}
 	}
 }
@@ -244,10 +324,10 @@ void part3Timer() {
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
-//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
-	thread t1(titleLoop);
-	t1.detach();//allows the program to output unicode characters required for the title screen to properly display
+	threads.push_back(thread(partNegative1Loop));
+	//allows the program to output unicode characters required for the title screen to properly display
 	//displays connecting message
 	connecting();
 	//prints first message, and resets repeat counter variable, and pauses code for 1500 ms.	
@@ -289,7 +369,7 @@ int main() {
 		}
 	}
 	system("cls");
-//STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//STATE CHECK FOR STANDARD MODE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	if (DEBUG == false) {
 		std::cout << "LOGIN:\n\nUSERNAME\n\n";
 		cin >> name;
@@ -324,8 +404,7 @@ int main() {
 			}
 			else if (file.find("2.txt") != string::npos) {
 				state = 2;
-				thread t2(storyLoop);
-				t2.detach();
+				threads.push_back(thread(part0Loop));
 				ofstream outFile("2.txt");
 				outFile << "Personal log 04/02/2034\nToday's task was to power down the life support systems. It's a delicate process - closing down the oxygen generators and thermal regulation, making sure there are no leaks. The same checks we've done a thousand times. But as I reach for the switch, the comms crackle unexpectedly. At first, it's just static - fragments of voices breaking through the noise. We're used to occasional glitches, but this feels different. Then the transmission cuts out entirely. The static lingers longer than it should, and we sit in silence, waiting for any response. But there's nothing. We can still hear each other in the station, but no word from ground control. A strange sense of unease settles over us. We've been trained for emergencies, but this doesn't feel like one. Something is off." << endl;
 				outFile.close();
@@ -383,8 +462,7 @@ int main() {
 		}
 		system("cls");
 		state = 3;
-		thread t3(part1Loop);
-		t3.detach();
+		threads.push_back(thread(part1Loop));
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
@@ -420,8 +498,7 @@ int main() {
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 		state = 4;
-		thread t4(part2Loop);
-		t4.detach();
+		threads.push_back(thread(part2Loop));
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
@@ -462,20 +539,18 @@ int main() {
 		nasaRadioUtility();
 		printWithDelay("INBOUND: 'ISS, this is Tiangong. We are initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Burn complete. We are on course to intercept.'\n\n", 150);
 		printWithDelay("OUTBOUND: 'Copy, Tiangong. See you on the other side.'\n\n", 150);
+		pauseForEnter();
 		printWithDelay("//Tiangong's burn was also a succecss, and we're now on course to intercept. It should be smooth sailing from here...\n\n", 50);
 		pauseForEnter();
 		animate(L"\n\n\n\n\n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▓▓▒▓▒▓    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n                                               ▓▓▓▓▒▒                                               \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓                                            \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ░▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▓▒        ▒▒▒▒                                   \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▓▓▓▒▒▓▒▒▒▒▒▒▒▓▓▓▓▓                                 \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▒▒▒▓▓▓▓▓                                 \n            ▒▒▒▒▒           ▓ ▓▓▓▓   ▒▒▒▒▓    ▓▓▓▒▒▒▒▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▓▓▓▓       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒        ░░░                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▒▒▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▓▓▓▓▒▓                                              \n                                               ▓▓▓▓▓▓                                               \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▒    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░▒▒▒▒      \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▒▓▓▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      \n");
 	}
 //CURRENTLY DEBUGGING, MOVE UP WHEN DONE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	state = 5;
-	thread t5(part3Loop);
-	t5.detach();
+	threads.push_back(thread(part3Loop));
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//It's been a couple hours, since we need to make multiple orbits to meet with the TSS. It's safer that way, to avoid a collision, and save fuel... Wait. What was that loud bang? Is that... wind?\n", 50);
 	pauseForEnter();
 	std::cout << "PRESSURE DROP DETECTED! OXYGEN RESERVE TANKS OPEN!\n\n";
-	thread timer(qte, 125);
-	timer.detach();
 	thread p2(part3Timer);
 	p2.detach();
 	std::cout << "PRESSURE DROP DETECTED IN JEM MODULE!\n\n";
@@ -484,23 +559,22 @@ int main() {
 	string usercheck;
 	string userpasscheck;
 	cin >> usercheck;
-	while (usercheck != name || userpasscheck != pass) {
+	while (true) {
 		if (usercheck == name) {
 			std::cout << "PASSWORD\n\n";
 			cin >> userpasscheck;
 			if (userpasscheck == pass) {
-				std::cout << "you didn't die!\n";
+				std::cout << "You didn't die!\n\n";
+				break;
 			}
 			else {
-				std::cout << "PASSWORD INCORRECT.\n";
+				std::cout << "INCORRECT PASSWORD.\n\n";
 				cin >> userpasscheck;
-				system("cls");
 			}
 		}
 		else {
 			std::cout << "USER NOT FOUND.\n\n";
 			cin >> usercheck;
-			system("cls");
 		}
 	}
 	return 0;
