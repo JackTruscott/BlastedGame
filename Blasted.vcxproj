@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="Ham.h" />
     <ClInclude Include="ManySuns.h" />
+    <ClInclude Include="PunctureSFX.h" />
     <ClInclude Include="TheBurns.h" />
     <ClInclude Include="Title.h" />
     <ClInclude Include="Vacuum.h" />
