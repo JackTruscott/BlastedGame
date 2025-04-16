@@ -12,23 +12,27 @@
 #include <mutex>//for background thread printing while the user interacts with the program
 #include <vector>
 #include <limits>
-#include "PunctureSFX.h" //puncture sound effect 
-#include "Title.h"//title music
-#include "ManySuns.h"//story music
-#include "TheBurns.h"//part 2 music
-#include "Ham.h" //part 1 music
-#include "Vacuum.h" //part 3 music
+#include "TitleASCII.h"//title ascii art
+#include "sfx1.h" //puncture sound effect 
+#include "music1.h"//title music
+#include "music2.h"//story music
+#include "music3.h"//part 1 music
+#include "music4.h" //part 2
+#include "music5.h" //part 3 music
 #pragma comment(lib, "winmm.lib")  // Link against winmm.lib
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int rep = 0;
-int repthread = 0;
 bool DEBUG = false;
-int state = 1;
-mutex cout_mutex;
-mutex threaded_audio;
+atomic <int> state = 0;
+mutex music1m;
+mutex music2m;
+mutex music3m;
+mutex music4m;
+mutex music5m;
+mutex sfx1m;
 string pass;
 string name;
 vector <thread> threads;
@@ -36,96 +40,12 @@ vector <thread> threads;
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void playAudio(const unsigned char* audioData, unsigned int dataSize) {
-	
-	// Play sound from memory (using LPCSTR)
-	if (PlaySoundA(reinterpret_cast<LPCSTR>(audioData), NULL, SND_MEMORY | SND_ASYNC)) {}
-	else { 
-		std::cout << "SOUND ERROR: " << GetLastError() << endl;
+	if (audioData == nullptr || dataSize == 0) {
+		PlaySoundA(NULL, NULL, 0);
+		return;
 	}
-}
-void partNegative1Loop() {
-	const int musicInterval = 109000; // 109 sec
-	int elapsedTime = 0;
-
-	while (state == 1) {
-		if (elapsedTime == 0) {
-			playAudio(Title, TitleSize);
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		elapsedTime += 500;
-
-		if (elapsedTime >= musicInterval) {
-			elapsedTime = 0;
-		}
-	}
-}
-void part0Loop() {
-	const int musicInterval = 97000; // 92 seconds in milliseconds
-	int elapsedTime = 0;
-
-	while (state == 2) {
-		if (elapsedTime == 0) {
-			playAudio(ManySuns, ManySunsSize);
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		elapsedTime += 500;
-
-		if (elapsedTime >= musicInterval) {
-			elapsedTime = 0;
-		}
-	}
-}
-void part1Loop() {
-	const int musicInterval = 159000; // 154 seconds in milliseconds
-	int elapsedTime = 0;
-
-	while (state == 3) {
-		if (elapsedTime == 0) {
-			playAudio(Ham, HamSize);
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		elapsedTime += 500;
-
-		if (elapsedTime >= musicInterval) {
-			elapsedTime = 0;
-		}
-	}
-}
-void part2Loop() {
-	const int musicInterval = 103000;
-	int elapsedTime = 0;
-
-	while (state == 4) {
-		if (elapsedTime == 0) {
-			playAudio(TheBurns, TheBurnsSize);
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		elapsedTime += 500;
-
-		if (elapsedTime >= musicInterval) {
-			elapsedTime = 0;
-		}
-	}
-}
-void part3Loop() {
-	const int musicInterval = 88000; // 88 seconds in milliseconds
-	int elapsedTime = 0;
-
-	while (state == 1) {
-		if (elapsedTime == 0) {
-			playAudio(Vacuum, VacuumSize);
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		elapsedTime += 500;
-
-		if (elapsedTime >= musicInterval) {
-			elapsedTime = 0;
-		}
+	if (!PlaySoundA(reinterpret_cast<LPCSTR>(audioData), NULL, SND_MEMORY | SND_ASYNC)) {
+		std::cout << "SOUND ERROR: " << GetLastError() << std::endl;
 	}
 }
 void printWithDelay(const string& text, int delayMs) {
@@ -239,26 +159,21 @@ void connecting() {
 	std::cout << "\rConnecting...\n";
 	rep = 0;
 } 
-string bottomLineANSIWithRefresh1() {
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	int rows = 25; // Default fallback
-	if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
-		rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	}
-	// Save cursor, move to bottom-left, clear line, restore cursor
-	return "\033[s\033[" + std::to_string(rows) + ";1H\033[2K";
+void initializeAudio() {
+	threads.push_back(thread(music1));
+	threads.push_back(thread(music2));
+	threads.push_back(thread(music3));
+	threads.push_back(thread(music4));
+	threads.push_back(thread(music5));
 }
-string bottomLineANSIWithRefresh2() {
-	return "\033[u";
-}
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
-	threads.push_back(thread(partNegative1Loop));
+	initializeAudio();
+	state = 1;
 	//allows the program to output unicode characters required for the title screen to properly display
 	//displays connecting message
 	connecting();
@@ -272,7 +187,7 @@ int main() {
 	this_thread::sleep_for(std::chrono::milliseconds(250));
 	std::cout << "Done.\n\n";
 	this_thread::sleep_for(std::chrono::milliseconds(1000));
-	wcoutForWindowsCMD(L"░▒▓███████▓▒░ ░▒▓█▓▒░         ░▒▓███████▓▒░ ░▒▓████████▓▒░ ░▒▓████████▓▒░   ░▒▓███████▓▒░   ░▒▓███████▓▒░\n░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░            ░▒▓█▓▒░      ░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒ ░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░      ░▒▓█▓▒░        ░▒▓█▓▒░░░▒▓█▓▒░\n ░▒▓███████▓▒░░▒▓█▓▒░         ░▒▓████████▓▒░ ░▒▓██████▓▒░       ░▒▓█▓▒░      ░▒▓██████▓▒░    ░▒▓█▓▒░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░░▒▓█▓▒░         ░▒▓█▓▒░     ░▒▓█▓▒░     ░▒▓█▓▒░         ░▒▓█▓▒░░░▒▓█▓▒░\n ░▒▓█▓▒░░▒▓█▓▒░ ▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░         ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░          ░▒▓█▓▒░░▒▓█▓▒░\n░▒▓███████▓▒░ ░▒▓████████▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓███████▓▒░       ░▒▓█▓▒░      ░▒▓████████▓▒░   ░▒▓███████▓▒░\n");
+	wcoutForWindowsCMD(TitleASCII);
 	this_thread::sleep_for(std::chrono::milliseconds(1000));//full chunk displays title, and waits 1000 ms. //this segment was generated by AI, and edited by me.
 	//displays subtitle
 	std::cout << "A SHORT TEXT BASED PUZZLE GAME BY JACK TRUSCOTT\n\n";
@@ -336,7 +251,6 @@ int main() {
 			}
 			else if (file.find("2.txt") != string::npos) {
 				state = 2;
-				threads.push_back(thread(part0Loop));
 				ofstream outFile("2.txt");
 				outFile << "Personal log 04/02/2034\nToday's task was to power down the life support systems. It's a delicate process - closing down the oxygen generators and thermal regulation, making sure there are no leaks. The same checks we've done a thousand times. But as I reach for the switch, the comms crackle unexpectedly. At first, it's just static - fragments of voices breaking through the noise. We're used to occasional glitches, but this feels different. Then the transmission cuts out entirely. The static lingers longer than it should, and we sit in silence, waiting for any response. But there's nothing. We can still hear each other in the station, but no word from ground control. A strange sense of unease settles over us. We've been trained for emergencies, but this doesn't feel like one. Something is off." << endl;
 				outFile.close();
@@ -394,10 +308,10 @@ int main() {
 		}
 		system("cls");
 		state = 3;
-		threads.push_back(thread(part1Loop));
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
+		state = 3;
 		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
@@ -430,7 +344,6 @@ int main() {
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 		state = 4;
-		threads.push_back(thread(part2Loop));
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
@@ -480,7 +393,14 @@ int main() {
 	state = 5;
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//We're on course to intercept with the TSS, and it's only a matter of time before we rendezvous...\n\n", 50);
-	playAudio(PunctureSFX, PunctureSFXSize);
-	pauseForEnter();
+	this_thread::sleep_for(chrono::milliseconds(3000));
+	this_thread::sleep_for(chrono::milliseconds(5000));
+	cout << "Exiting...\n";
+	state = 99;
+	for (auto& t : threads) {
+		if (t.joinable()) {
+			t.join();  // wait for the thread to finish
+		}
+	}
 	return 0;
 }

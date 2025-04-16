@@ -132,12 +132,13 @@
     <ClCompile Include="Blasted.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ham.h" />
-    <ClInclude Include="ManySuns.h" />
-    <ClInclude Include="PunctureSFX.h" />
-    <ClInclude Include="TheBurns.h" />
-    <ClInclude Include="Title.h" />
-    <ClInclude Include="Vacuum.h" />
+    <ClInclude Include="music3.h" />
+    <ClInclude Include="music2.h" />
+    <ClInclude Include="sfx1.h" />
+    <ClInclude Include="music4.h" />
+    <ClInclude Include="music1.h" />
+    <ClInclude Include="TitleASCII.h" />
+    <ClInclude Include="music5.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
