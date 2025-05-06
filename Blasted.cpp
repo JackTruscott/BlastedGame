@@ -15,6 +15,7 @@
 #include "TitleASCII.h"//title ascii art
 #include "BadGame.h"//pre title 1
 #include "Presenting.h"//pre title 2
+#include "miniaudio.h"
 #include "sfx1.h" //puncture sound effect 
 #include "music1.h"//title music
 #include "music2.h"//story music
@@ -22,33 +23,23 @@
 #include "music4.h" //part 2
 #include "music5.h" //part 3 music
 #pragma comment(lib, "winmm.lib")  // Link against winmm.lib
+#define MINIAUDIO_IMPLEMENTATION
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bool DEBUG = false;
-atomic <int> state = 0;
-mutex music1m;
-mutex music2m;
-mutex music3m;
-mutex music4m;
-mutex music5m;
-mutex sfx1m;
 string pass;
 string name;
-vector <thread> threads;
+ma_decoder g_decoder;
+ma_device g_device;
+bool g_isPlaying = false;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void playAudio(const unsigned char* audioData, unsigned int dataSize) {
-	if (audioData == nullptr || dataSize == 0) {
-		PlaySoundA(NULL, NULL, 0);
-		return;
-	}
-	if (!PlaySoundA(reinterpret_cast<LPCSTR>(audioData), NULL, SND_MEMORY | SND_ASYNC)) {
-		std::cout << "SOUND ERROR: " << GetLastError() << std::endl;
-	}
-}
+// Callback to read audio data from memory (handles looping if necessary)
+
+
 void printWithDelay(const string& text, int delayMs) {
 	for (char c : text) {
 		cout << c << flush;
@@ -125,7 +116,7 @@ void qte(int timeoutSeconds) {
 		if (((clock() - startTime) / CLOCKS_PER_SEC) >= timeoutSeconds) {
 			std::cout << "Something very, very bad just happened...\n";
 			pauseForEnter();
-			state = 1;
+
 
 			  // Timeout failure
 		}
@@ -157,19 +148,12 @@ void connecting() {
 	std::cout << "\rConnecting...\n";
 	rep = 0;
 } 
-void initializeAudio() {
-	threads.push_back(thread(music1));
-	threads.push_back(thread(music2));
-	threads.push_back(thread(music3));
-	threads.push_back(thread(music4));
-	threads.push_back(thread(music5));
-}
 void story() {
 	string file;
 	cin >> file;
 	int rep = 0;
 	while (rep < 7) {
-		if (file == "1.txt") {
+		if (file == "1.txt" || file == "1") {
 			ofstream outFile("1.txt");
 			outFile << "Personal log 04/01/2034\nWe've started the slow process of decommissioning the ISS today, following the usual protocols. The station is old - 36 years in orbit and barely holding together. It's routine. Powering down the science labs, clearing out the old research equipment, shutting off communication relays. The systems are dated, some on their last legs, but we've kept them operational longer than anyone thought possible. Now, it's just about making sure everything is safely powered off, secured, and ready for the eventual re-entry. The Earth below is as stunning as ever, rotating peacefully in the distance. There's talk of rising tensions among the major powers back home, but we have our work cut out for us. The last thing we expect is for the decommissioning to be anything but routine." << endl;
 			outFile.close();
@@ -177,8 +161,8 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("2.txt") != string::npos) {
-			state = 2;
+		else if (file == "2.txt" || file == "2") {
+
 			ofstream outFile("2.txt");
 			outFile << "Personal log 04/02/2034\nToday's task was to power down the life support systems. It's a delicate process - closing down the oxygen generators and thermal regulation, making sure there are no leaks. The same checks we've done a thousand times. But as I reach for the switch, the comms crackle unexpectedly. At first, it's just static - fragments of voices breaking through the noise. We're used to occasional glitches, but this feels different. Then the transmission cuts out entirely. The static lingers longer than it should, and we sit in silence, waiting for any response. But there's nothing. We can still hear each other in the station, but no word from ground control. A strange sense of unease settles over us. We've been trained for emergencies, but this doesn't feel like one. Something is off." << endl;
 			outFile.close();
@@ -186,7 +170,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("3.txt") != string::npos) {
+		else if (file == "3.txt" || file == "3") {
 			ofstream outFile("3.txt");
 			outFile << "Personal log 04/03/2034\nThe station hums around us, but the stillness has settled into something far worse than quiet. It's as if the world below has stopped entirely. I check the comms again, trying to re-establish contact with Houston, but there's no response. And then—just as we begin to focus on what to do next - a bright flash erupts on the surface of the Earth. At first, it looks like a distant thunderstorm, but it's too intense, too sudden. I freeze. The flash is followed by another, then another. Cities are lighting up all over, dotting the ground like some kind of messed up firework show in the night. Only this isn't a celebration. It's something much worse. I don’t know what's happening down there, but the flashes seem too consistent, too deliberate." << endl;
 			outFile.close();
@@ -194,7 +178,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("4.txt") != string::npos) {
+		else if (file == "4.txt" || file == "4") {
 			ofstream outFile("4.txt");
 			outFile << "Personal log 04/04/2034\nThe flashes continue all night, and the world below seems to be burning with them. I try again to get any kind of communication, but the system is dead. The radio waves are filled with nothing but static, likely due to the massive amounts of smoke and debris now visible from up here. We were supposed to have redundancy for issues like these, but it's as if we're disconnected entirely from Earth. My heart is racing as I watch the blinding light of explosions flicker across the planet's surface, lighting up entire regions in the blink of an eye. One of my colleagues suggests we send a distress signal, but without comms, that's impossible. We've been trained for these moments, but there's no protocol for a situation like this - where the world has erupted in flames, and we're floating in the silence of space, unable to reach anyone. The Earth we've known is slipping away. And we're still here, helpless." << endl;
 			outFile.close();
@@ -202,7 +186,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("5.txt") != string::npos) {
+		else if (file == "5.txt" || file == "5") {
 			ofstream outFile("5.txt");
 			outFile << "Personal log 04/05/2034\nI'm working on the backup communication systems now. It's a long shot, given all the smoke, but maybe we can get a signal through. I've gone through the manual twice already, checking every connection, every wire, every protocol, but nothing seems to work. It's like the system has been completely fried. It could well be, given that explosions of that magnitude put off an electromagnetic pulse. For all we know, our equipment could only think it works, while not getting a single signal through. Meanwhile, the flashes continue below, relentless. I can't look away. There's a sinking feeling in my chest as I watch the world I once knew being wiped out, piece by piece. The blasts are too bright, too frequent to be random. This isn’t just a war - it's something much larger, much worse than any conflict we've ever known. And we are stuck here, out of reach." << endl;
 			outFile.close();
@@ -210,7 +194,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("6.txt") != string::npos) {
+		else if (file == "6.txt" || file == "6") {
 			ofstream outFile("6.txt");
 			outFile << "Personal log 04/06/2034\nThe Earth below is shrouded in a chaotic storm of fire and smoke. Satellite and radio communications went down 4 days ago, and with it, our contact with Earth’s space agencies - Houston, Moscow, Beijing - all gone. That's assuming someone hasn't blown their centres to bits yet. The silence is deafening. I've been monitoring frequencies all night using the ham radio, desperate for any sign of life. Then - finally - amidst the static, I heard a faint voice. It was scrambled at first, but I caught the call sign: 'Kilo Foxtrot 3-9-8'. Amateur radio operators, somehow still operating their HAM radio stations in the midst of the devastation. I immediately responded, desperate for some form of communication. (TRANSCRIPT BELOW)\n\nISS: NA1SS to Kilo Foxtrot 3 - 9 - 8, do you copy? This is NA1SS, we are still in orbit.\n //The transmission was broken, filled with bursts of interference, but I could make out their reply.\nKF398: NA1SS, we hear you! We're here. Holding. How's the sky?\n //I don't know how long their survival will last, but for now, they remain. It's our last connection to the world below." << endl;
 			outFile.close();
@@ -218,7 +202,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("7.txt") != string::npos) {
+		else if (file == "7.txt" || file == "7") {
 			ofstream outFile("7.txt");
 			outFile << "Personal log 04/07/2034\nThis morning's transmission was more stable than last night's. I managed to make contact with KF398 again. The signal was weak, but there was clarity in their words. They spoke of rationing, keeping the small community together, and using the ham radio as their lifeline. They asked about the Earth, about the ISS, about what was left. (TRANSCRIPT BELOW)\n\nKF398: NA1SS, what's left of the world down there? What's happening?\n //I took a deep breath before responding, knowing the truth would hurt. \nISS: Kilo Foxtrot 3-9-8, the sky is dark with smoke. The cities, they've fallen. There's nothing left but ashes, and we can't see any lights until the smoke clears. But you're still there. You're holding.\n //There was a pause, long enough for me to worry if the signal had dropped again. Then their voice crackled through the static once more, tinged with both relief and sorrow: \nKF398: We're still here. We'll keep holding. You're our last link.\n //The isolation is overwhelming, but hearing their voices again, it keeps something alive inside us. As long as we're still in touch, there's a glimmer of hope. For now, at least, we keep the signal open." << endl;
 			outFile.close();
@@ -226,7 +210,7 @@ void story() {
 			rep++;
 			if (rep < 7) { cin >> file; }
 		}
-		else if (file.find("skip") != string::npos) {
+		else if (file == "skip") {
 			rep = 7;
 		}
 		else {
@@ -235,14 +219,39 @@ void story() {
 		}
 	}
 }
+void printAtBottom(const std::string& text) {
+	// Get the handle to the standard output (console)
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Enable ANSI escape sequences (virtual terminal processing)
+	DWORD dwMode = 0;
+	GetConsoleMode(hOut, &dwMode);
+	SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+	// Get the visible window height
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hOut, &csbi);
+	int consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+	// Save current cursor position
+	std::cout << "\033[s";
+
+	// Move cursor to the bottom line, column 1
+	std::cout << "\033[" << consoleHeight << ";1H";
+
+	// Print the text at the bottom
+	std::cout << text << std::flush;
+
+	// Restore original cursor position
+	std::cout << "\033[u" << std::flush;
+}
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
-	initializeAudio();
-	state = 1;
 	wcoutForWindowsCMD(badGame);
 	this_thread::sleep_for(chrono::milliseconds(3000));
 	system("cls");
@@ -314,13 +323,14 @@ int main() {
 		std::cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(100));
 		std::cout << "1.txt	2.txt	3.txt	4.txt	5.txt	6.txt	7.txt\n\n\n\n";
+		printAtBottom("(Type and enter 'skip' to skip this.)");
 		story();
 		system("cls");
-		state = 3;
+
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
-		state = 3;
+
 		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
@@ -331,7 +341,7 @@ int main() {
 		printWithDelay("OUTBOUND: 'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
 		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' \n\n", 150);
 		pauseForEnter();
-		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...\n\n", 50);
+		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in... (This is a shift cipher. Look for similarities to find the shift code.)\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
 		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
@@ -352,7 +362,7 @@ int main() {
 		pauseForEnter();
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
-		state = 4;
+
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
@@ -399,17 +409,12 @@ int main() {
 		animate(L"\n\n\n\n\n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▓▓▒▓▒▓    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒       \n                                               ▓▓▓▓▒▒                                               \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓                                            \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ░▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▓▒        ▒▒▒▒                                   \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▓▓▓▒▒▓▒▒▒▒▒▒▒▓▓▓▓▓                                 \n          ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▒▒▒▓▓▓▓▓                                 \n            ▒▒▒▒▒           ▓ ▓▓▓▓   ▒▒▒▒▓    ▓▓▓▒▒▒▒▒       ▒▒▒▒                                   \n           ▒▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▓▓▓▓       ▒▒▒▒                                   \n            ▒▒▒▒▒                   ▒▒▒▒  ▒▒▒▒▓▓▓▓▒▓▓▒       ▒▒▒▒                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒        ░░░                                   \n                                    ▒▒▒▒▒ ▒▒▒▒▓▓▓▓▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▒▒▓▓▓▒                                              \n                                    ▒▒▒▒▒ ▒▒▒▒ ▓▓▓▓▓▒▓                                              \n                                               ▓▓▓▓▓▓                                               \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒     ▓▓▓▒▒    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░▒▒▒▒      \n      ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    ▒▓▓▒   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒      \n");
 	}
 	//CURRENTLY DEBUGGING, MOVE UP WHEN DONE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	state = 5;
+
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//We're on course to intercept with the TSS, and it's only a matter of time before we rendezvous...\n\n", 50);
 	this_thread::sleep_for(chrono::milliseconds(3000));
 	this_thread::sleep_for(chrono::milliseconds(5000));
 	cout << "Exiting...\n";
-	state = 99;
-	for (auto& t : threads) {
-		if (t.joinable()) {
-			t.join();  // wait for the thread to finish
-		}
-	}
+
 	return 0;
 }
