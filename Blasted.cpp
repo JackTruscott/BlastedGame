@@ -1,4 +1,5 @@
-﻿//HEADERS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿#define MINIAUDIO_IMPLEMENTATION
+//HEADERS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <iostream>
 #include <thread>//for wait
 #include <chrono>//for wait
@@ -23,7 +24,6 @@
 #include "music4.h" //part 2
 #include "music5.h" //part 3 music
 #pragma comment(lib, "winmm.lib")  // Link against winmm.lib
-#define MINIAUDIO_IMPLEMENTATION
 using namespace std;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -245,6 +245,48 @@ void printAtBottom(const std::string& text) {
 	// Restore original cursor position
 	std::cout << "\033[u" << std::flush;
 }
+void dataCallback(ma_device* pDevice, void* pOutput, const void* /*pInput*/, ma_uint32 frameCount) {
+	ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
+	ma_decoder_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
+}
+void playWavFromMemory(const unsigned char* data, size_t size) {
+	ma_decoder decoder;
+	ma_device_config deviceConfig;
+	ma_device device;
+
+	if (ma_decoder_init_memory(data, size, NULL, &decoder) != MA_SUCCESS) {
+		std::cerr << "AUDIO ERROR: FAILED TO INITIALIZE DECODER.\n";
+		return;
+	}
+
+	deviceConfig = ma_device_config_init(ma_device_type_playback);
+	deviceConfig.playback.format = decoder.outputFormat;
+	deviceConfig.playback.channels = decoder.outputChannels;
+	deviceConfig.dataCallback = dataCallback;
+	deviceConfig.sampleRate = decoder.outputSampleRate;
+	deviceConfig.pUserData = &decoder;
+
+	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
+		std::cerr << "AUDIO ERROR: FAILED TO INITIALIZE DEVICE.\n";
+		ma_decoder_uninit(&decoder);
+		return;
+	}
+
+	ma_device_start(&device);
+
+	ma_uint64 cursor = 0;
+	ma_uint64 totalFrames = 0;
+	ma_decoder_get_length_in_pcm_frames(&decoder, &totalFrames);
+
+	while (cursor < totalFrames) {
+		ma_decoder_get_cursor_in_pcm_frames(&decoder, &cursor);
+		Sleep(100);  // Use Windows' Sleep()
+	}
+
+
+	ma_device_uninit(&device);
+	ma_decoder_uninit(&decoder);
+}
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -252,6 +294,7 @@ void printAtBottom(const std::string& text) {
 int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
+	playWavFromMemory(rawData1, rawData1Size);
 	wcoutForWindowsCMD(badGame);
 	this_thread::sleep_for(chrono::milliseconds(3000));
 	system("cls");
