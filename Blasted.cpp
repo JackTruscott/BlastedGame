@@ -29,11 +29,14 @@ using namespace std;
 
 //GLOBAL VARIABLES//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bool DEBUG = false;
+bool audio = true;
 string pass;
 string name;
 ma_decoder g_decoder;
 ma_device g_device;
 bool g_isPlaying = false;
+mutex audioMutex;
+vector <thread> asynchAudio;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -249,7 +252,7 @@ void dataCallback(ma_device* pDevice, void* pOutput, const void* /*pInput*/, ma_
 	ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
 	ma_decoder_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
 }
-void playWavFromMemory(const unsigned char* data, size_t size) {
+void playWavFromMemory(const unsigned char* data, size_t size, int time) {
 	ma_decoder decoder;
 	ma_device_config deviceConfig;
 	ma_device device;
@@ -278,23 +281,31 @@ void playWavFromMemory(const unsigned char* data, size_t size) {
 	ma_uint64 totalFrames = 0;
 	ma_decoder_get_length_in_pcm_frames(&decoder, &totalFrames);
 
-	while (cursor < totalFrames) {
-		ma_decoder_get_cursor_in_pcm_frames(&decoder, &cursor);
-		Sleep(100);  // Use Windows' Sleep()
+	int timeElapsed = 0;
+	while (timeElapsed < time && audio) {
+		timeElapsed += 100;
+		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
 
 	ma_device_uninit(&device);
 	ma_decoder_uninit(&decoder);
 }
-
+void newSound() {
+	audio = false;
+	this_thread::sleep_for(chrono::milliseconds(200));
+	audio = true;
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
-	playWavFromMemory(rawData1, rawData1Size);
+	
+	thread asynchAudio1(playWavFromMemory, rawData1, rawData1Size, 150000);
+	asynchAudio1.detach();
+
 	wcoutForWindowsCMD(badGame);
 	this_thread::sleep_for(chrono::milliseconds(3000));
 	system("cls");
@@ -326,6 +337,7 @@ int main() {
 			char ch = _getch();  // Get the pressed key's ascii value
 			if (ch == 27) {  // 27 is the ASCII value for the Escape key, so when getch tells the computer the value is 27, this code runs
 				std::cout << "Exiting...\n\n";
+				audio = false;
 				this_thread::sleep_for(std::chrono::milliseconds(1000));
 				exit(0);
 			}
@@ -367,13 +379,18 @@ int main() {
 		this_thread::sleep_for(std::chrono::milliseconds(100));
 		std::cout << "1.txt	2.txt	3.txt	4.txt	5.txt	6.txt	7.txt\n\n\n\n";
 		printAtBottom("(Type and enter 'skip' to skip this.)");
+		newSound();
+		thread asynchAudio2(playWavFromMemory, rawData2, rawData2Size, 150000);
+		asynchAudio2.detach();
 		story();
 		system("cls");
 
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
-
+		newSound();
+		thread asynchAudio3(playWavFromMemory, rawData3, rawData3Size, 150000);
+		asynchAudio3.detach();
 		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
@@ -382,9 +399,9 @@ int main() {
 		nasaRadioUtility();
 		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		printWithDelay("OUTBOUND: 'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
-		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' \n\n", 150);
+		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' (This is a shift cipher. Look for similarities to find the shift code.) \n\n", 150);
 		pauseForEnter();
-		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in... (This is a shift cipher. Look for similarities to find the shift code.)\n\n", 50);
+		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
 		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
@@ -405,7 +422,8 @@ int main() {
 		pauseForEnter();
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
-
+		newSound();
+		thread asynchAudio4(playWavFromMemory, rawData4, rawData4Size, 150000);
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
@@ -455,8 +473,13 @@ int main() {
 
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//We're on course to intercept with the TSS, and it's only a matter of time before we rendezvous...\n\n", 50);
+	newSound();
+	thread asynchAudio5(playWavFromMemory, PunctureSFX, PunctureSFXSize, 150000);
 	this_thread::sleep_for(chrono::milliseconds(3000));
 	this_thread::sleep_for(chrono::milliseconds(5000));
+	newSound();
+	thread asynchAudio6(playWavFromMemory, rawData5, rawData5Size, 150000);
+	this_thread::sleep_for(chrono::milliseconds(8000));
 	cout << "Exiting...\n";
 
 	return 0;
