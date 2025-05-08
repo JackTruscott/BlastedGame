@@ -34,6 +34,7 @@ string pass;
 string name;
 ma_decoder g_decoder;
 ma_device g_device;
+ma_engine engine;
 bool g_isPlaying = false;
 mutex audioMutex;
 vector <thread> asynchAudio;
@@ -252,11 +253,12 @@ void dataCallback(ma_device* pDevice, void* pOutput, const void* /*pInput*/, ma_
 	ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
 	ma_decoder_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
 }
-void playWavFromMemory(const unsigned char* data, size_t size, int time) {
+void playWavFromMemory(const void* data, size_t size, bool loop) {
 	ma_decoder decoder;
 	ma_device_config deviceConfig;
 	ma_device device;
 
+	// Initialize the decoder
 	if (ma_decoder_init_memory(data, size, NULL, &decoder) != MA_SUCCESS) {
 		std::cerr << "AUDIO ERROR: FAILED TO INITIALIZE DECODER.\n";
 		return;
@@ -265,29 +267,48 @@ void playWavFromMemory(const unsigned char* data, size_t size, int time) {
 	deviceConfig = ma_device_config_init(ma_device_type_playback);
 	deviceConfig.playback.format = decoder.outputFormat;
 	deviceConfig.playback.channels = decoder.outputChannels;
-	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.sampleRate = decoder.outputSampleRate;
+	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.pUserData = &decoder;
 
+	// Initialize the device
 	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
 		std::cerr << "AUDIO ERROR: FAILED TO INITIALIZE DEVICE.\n";
 		ma_decoder_uninit(&decoder);
 		return;
 	}
 
-	ma_device_start(&device);
+	// Start the device
+	if (ma_device_start(&device) != MA_SUCCESS) {
+		std::cerr << "AUDIO ERROR: FAILED TO START DEVICE.\n";
+		ma_device_uninit(&device);
+		ma_decoder_uninit(&decoder);
+		return;
+	}
 
-	ma_uint64 cursor = 0;
+	// Get total number of frames in the audio
 	ma_uint64 totalFrames = 0;
 	ma_decoder_get_length_in_pcm_frames(&decoder, &totalFrames);
 
-	int timeElapsed = 0;
-	while (timeElapsed < time && audio) {
-		timeElapsed += 100;
-		this_thread::sleep_for(chrono::milliseconds(100));
+	// Loop until `audio` is false or playback ends
+	while (audio) {
+		ma_uint64 cursor = 0;
+		
+		// Play audio until it finishes or looping is true
+		while (audio && cursor < totalFrames) {
+			ma_decoder_get_cursor_in_pcm_frames(&decoder, &cursor);
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		// If looping, seek back to the start and keep playing
+		if (loop && audio) {
+			ma_decoder_seek_to_pcm_frame(&decoder, 0);
+			cursor = 0;  // Reset cursor
+			
+		}
 	}
 
-
+	// Cleanup
 	ma_device_uninit(&device);
 	ma_decoder_uninit(&decoder);
 }
@@ -303,7 +324,7 @@ int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
 	
-	thread asynchAudio1(playWavFromMemory, rawData1, rawData1Size, 150000);
+	thread asynchAudio1(playWavFromMemory, rawData1, rawData1Size, true);
 	asynchAudio1.detach();
 
 	wcoutForWindowsCMD(badGame);
@@ -378,19 +399,18 @@ int main() {
 		std::cout << "\\home\\" << name << "\\documents\\logs\\2034\\april\\\n";
 		this_thread::sleep_for(std::chrono::milliseconds(100));
 		std::cout << "1.txt	2.txt	3.txt	4.txt	5.txt	6.txt	7.txt\n\n\n\n";
-		printAtBottom("(Type and enter 'skip' to skip this.)");
+		printAtBottom("(Type and enter 'skip' to skip this. You must close the opened notepad windows to interact with the game.)");
 		newSound();
-		thread asynchAudio2(playWavFromMemory, rawData2, rawData2Size, 150000);
+		thread asynchAudio2(playWavFromMemory, rawData2, rawData2Size, true);
 		asynchAudio2.detach();
 		story();
 		system("cls");
-
+		newSound();
+		thread asynchAudio3(playWavFromMemory, rawData3, rawData3Size, true);
+		asynchAudio3.detach();
 		printWithDelay("NEW MISSION DIRECTIVE: MAKE IT HOME\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		int shift = 0;
-		newSound();
-		thread asynchAudio3(playWavFromMemory, rawData3, rawData3Size, 150000);
-		asynchAudio3.detach();
 		printWithDelay("PART 1: MAKING CONNECTIONS\n\n\n", 50);
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
@@ -423,7 +443,8 @@ int main() {
 		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 		newSound();
-		thread asynchAudio4(playWavFromMemory, rawData4, rawData4Size, 150000);
+		thread asynchAudio4(playWavFromMemory, rawData4, rawData4Size, true);
+		asynchAudio4.detach();
 		printWithDelay("PART 2: FIRE IN THE SKY\n\n\n", 50);
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
@@ -474,11 +495,13 @@ int main() {
 	printWithDelay("PART 3: PUNCTURED\n\n\n", 50);
 	printWithDelay("//We're on course to intercept with the TSS, and it's only a matter of time before we rendezvous...\n\n", 50);
 	newSound();
-	thread asynchAudio5(playWavFromMemory, PunctureSFX, PunctureSFXSize, 150000);
-	this_thread::sleep_for(chrono::milliseconds(3000));
+	thread asynchAudioSFX1(playWavFromMemory, PunctureSFX, PunctureSFXSize, false);
+	asynchAudioSFX1.detach();
+	this_thread::sleep_for(chrono::milliseconds(30000));
 	this_thread::sleep_for(chrono::milliseconds(5000));
 	newSound();
-	thread asynchAudio6(playWavFromMemory, rawData5, rawData5Size, 150000);
+	thread asynchAudio6(playWavFromMemory, rawData5, rawData5Size, true);
+	asynchAudio6.detach();
 	this_thread::sleep_for(chrono::milliseconds(8000));
 	cout << "Exiting...\n";
 
