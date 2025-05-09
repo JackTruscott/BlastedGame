@@ -41,9 +41,6 @@ vector <thread> asynchAudio;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //FUNCTIONS//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Callback to read audio data from memory (handles looping if necessary)
-
-
 void printWithDelay(const string& text, int delayMs) {
 	for (char c : text) {
 		cout << c << flush;
@@ -101,7 +98,7 @@ void wcoutForWindowsCMD(const wchar_t* wideString) {
 	delete[] multiByteString;
 }
 void pauseForEnter() {
-	printWithDelay("PRESS ENTER TO CONTINUE...\n", 50);
+	printWithDelay("PRESS ENTER TO CONTINUE...", 50);
 	while (true) {
 		if (_kbhit()) {
 			char ch = _getch();
@@ -137,6 +134,8 @@ void nasaRadioUtility() {
 	std::cout << "				 ___________________________\n";
 	std::cout << "				| NASA RADIO UTILITY, 1998. |\n";
 	wcoutForWindowsCMD(L"				 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n");
+	std::cout << "| INB/OUTB |                                      DATA                 \n";
+	
 }
 void connecting() {
 	std::cout << "Connecting";
@@ -224,26 +223,40 @@ void story() {
 	}
 }
 void printAtBottom(const std::string& text) {
-	// Get the handle to the standard output (console)
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	// Enable ANSI escape sequences (virtual terminal processing)
+	// Enable ANSI escape sequences
 	DWORD dwMode = 0;
 	GetConsoleMode(hOut, &dwMode);
 	SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
-	// Get the visible window height
+	// Get console size
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(hOut, &csbi);
 	int consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+
+	// Estimate how many physical lines this string will take when wrapped
+	int wrappedLines = (text.length() + consoleWidth - 1) / consoleWidth;
+
+	// Calculate starting row from the bottom
+	int startRow = consoleHeight - wrappedLines + 1;
+	if (startRow < 1) startRow = 1; // Prevent overflow to top
 
 	// Save current cursor position
 	std::cout << "\033[s";
 
-	// Move cursor to the bottom line, column 1
-	std::cout << "\033[" << consoleHeight << ";1H";
+	// Move cursor to calculated row
+	std::cout << "\033[" << startRow << ";1H";
 
-	// Print the text at the bottom
+	// Clear enough lines to prevent ghost text (optional)
+	for (int i = 0; i < wrappedLines; ++i) {
+		std::cout << "\033[K\033[E"; // Clear line and move cursor down
+	}
+	// Move back to startRow again
+	std::cout << "\033[" << wrappedLines << "F";
+
+	// Print text
 	std::cout << text << std::flush;
 
 	// Restore original cursor position
@@ -319,7 +332,7 @@ void newSound() {
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//MAIN SCRIPT//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MAIN//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int main() {
 	//TITLE SEQUENCE//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	SetConsoleOutputCP(CP_UTF8);
@@ -415,32 +428,36 @@ int main() {
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
 		printWithDelay("//We've decided to try to contact the others in space. It's cruel to try to go home without them.\n\n", 50);
 		pauseForEnter();
-		system("cls");
 		nasaRadioUtility();
-		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
-		printWithDelay("OUTBOUND: 'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
-		printWithDelay("INBOUND: 'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' (This is a shift cipher. Look for similarities to find the shift code.) \n\n", 150);
+		std::cout << "\n\n  ERR:      SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
+		std::cout << "  OUTBOUND: ";
+		printWithDelay("'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
+		std::cout << "  INBOUND:  ";
+		printWithDelay("'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' (This is a shift cipher. Look for similarities to find the shift code.) \n\n", 150);
+		printAtBottom("Fun Fact: NA1SS is the official callsign of the International Space Station. It is used for amateur radio (HAM) contact with the station. Anybody with proper training can contact the ISS at certain times.");
 		pauseForEnter();
-		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...\n\n", 50);
+		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...", 50);
+		cout << endl;
 		pauseForEnter();
 		nasaRadioUtility();
-		std::cout << "\n\nERR: SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
+		std::cout << "\n\n  ERR:      SIGNAL TOO WEAK TO AUTO-ADJUST. PLEASE INPUT MANUAL ANGLE ADJUSTMENT.\n\n";
 		cin >> shift;
 		while (shift != 3) {
 			cin >> shift;
 			if (cin.fail()) {
 				cin.clear();
 				cin.ignore(10000, '\n');
-				std::cout << "\nERR: INPUT INVALID.\n\n";
+				std::cout << "\n  ERR:      INPUT INVALID.\n\n";
 			}
 			else {
-				std::cout << "\n ERR: WEAK OR NO SIGNAL DETECTED.";
+				std::cout << "\n  ERR:      WEAK OR NO SIGNAL DETECTED.";
 			}
 		}
-		std::cout << "\nINFO: STABLE SIGNAL ESTABLISHED. MAINTAIN 3 DEGREES (SET ANGLE) FOR OPTIMAL CONNECTION.\n\n";
-		printWithDelay("\nINBOUND: 'ISS, we have solid copy! This is Tiangong, we read!'\n\n", 150);
+		std::cout << "\n  INFO:     STABLE SIGNAL ESTABLISHED. MAINTAIN 3 DEGREES (SET ANGLE) FOR OPTIMAL CONNECTION.\n\n";
+		std::cout << "  INBOUND:  ";
+		printWithDelay("'ISS, we have solid copy! This is Tiangong, we read!'\n\n", 150);
 		pauseForEnter();
-		printWithDelay("//The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
+		printWithDelay("  //The transmission was garbled, and the English was heavily accented, but with some fine tuning, we made contact.\n\n", 50);
 		pauseForEnter();
 		newSound();
 		thread asynchAudio4(playWavFromMemory, rawData4, rawData4Size, true);
@@ -449,9 +466,12 @@ int main() {
 		printWithDelay("//We've gotten a number of things done. We've established contact with the Chinese scientists aboard the TSS, and made plans to dock the two stations, using their clone of our APAS docking system. Here's to hoping we'll make it. Due to our limited fuel, both stations will be burning at times we scheduled over the radio, but the margin for error is pretty scary.\n\n", 50);
 		pauseForEnter();
 		nasaRadioUtility();
-		printWithDelay("OUTBOUND: 'Tiangong, this is ISS, how copy?'\n\n", 150);
-		printWithDelay("INBOUND: 'ISS, we read you loud and clear.'\n\n", 150);
-		printWithDelay("OUTBOUND: 'Copy, Tiangong. We're burning on schedule. Standby.\n\n", 150);
+		std::cout << "  OUTBOUND: ";
+		printWithDelay("'Tiangong, this is ISS, how copy?'\n\n", 150);
+		std::cout << "  INBOUND:  ";
+		printWithDelay("'ISS, we read you loud and clear.'\n\n", 150);
+		std::cout << "  OUTBOUND: ";
+		printWithDelay("'Copy, Tiangong. We're burning on schedule. Standby.\n\n", 150);
 		pauseForEnter();
 		std::cout << "ENGINE START...\n";
 		this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -465,8 +485,10 @@ int main() {
 		qte(1);
 		system("cls");
 		nasaRadioUtility();
-		printWithDelay("OUTBOUND: 'Initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Engines are shut down, repeat, burn is complete and engines are off.'\n\n", 150);
-		printWithDelay("INBOUND: 'Copy, ISS. We're standing by until it is time for our burn. Good luck.'\n\n", 150);
+		std::cout << "  OUTBOUND: ";
+		printWithDelay("'Initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Engines are shut down, repeat, burn is complete and engines are off.'\n\n", 150);
+		std::cout << "  INBOUND:  ";
+		printWithDelay("'Copy, ISS. We're standing by until it is time for our burn. Good luck.'\n\n", 150);
 		pauseForEnter();
 		animate(L"\n\n\n\n\n                                                                 ▒▒░░░░░░░▒░░░░░░░▒▓▒░░░▒▒░░▒░░                                                       \n                                                               ░░▒▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒░░░                                                      \n                                                              ░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░                                                       \n                                                              ░░ ░▒▒░▒▒░▒▒▒▒░░░░░░░░░░░░▒ ▒▒░                               ░                         \n                                    ░░░░░░                   ░▒▒▒░░░▒░▒▒▒▒▒▒░             ░░░                     ░▒▒░░░  ░░▒▒░░░                     \n                           ░░░▒▒░░░░▒░░░▒▒▒▓▒░   ░░           ░▒▒▓▒▒░░░░▒▒▒▒░  ░░░   ░          ░░░░▒▒░ ░░░▒░░░░░░░▒░▒▒▒░░░░▒▒░▒▒░░                   \n                ░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▓▒▓▒▒▒▒▓▓▓▒▒▓▓▒▒▓▓▓▓▓▒▒▒▒▒▒▒▓▓▒▒▒▒▒▓▓▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▒▒▒▒▒▒▒░░░░▒▓▓▒▒▒▒▒▒▒░░░░░░░▒░░░                   \n           ░▒▒▒▒▒▒▒▒▒▒▒░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░▓▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒░░░▒▒▒▒░░░░░░░░░░▒░░░░░               \n              ░▒▒▒░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▒▒░░▒▒▒▒▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒░░░▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒  ░▒▒▒░░▓▓▒       ░░░░▒▒▒░░         ░░░░░░░              \n                ░░░▒▒▒▒▒▒▒▒░░░▒▓▒░░░▒▒▒▒▒▒░░▓▓▓░░░░░░▒▒▒▓▒▒▓▓▒▒▒▒ ░░░▒▒▒▒▒▒▒▒▓▓▒▒▒▓▓▓▓▒▓▓▒▒▒▒░  ░░░ ░▓▓▒          ░▒▒▒░                               \n                     ░░░░    ░▒▓▒ ░▒░▒▒▒▒░░░▒▓▓░      ░▒▓▓▒▓▓▒▒▒▒░░▒▒▒░░▒▒▒▒▒▒▒░▒▒▒▒▒▓▒▓▓░▒▓▒░      ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▒░░▒▒▒░    ░▒▓▓░      ░▒▓▓▒▓▓▒▒▓▒░  ░░░░▒▒▒░░░░▒▒░░▓▓▓▒▓▓▒▓▓▒       ░▒▓▒           ▒▒▒░                               \n                             ░▒▒▒░ ░░      ░▒▓▓░      ░▒▓▓▒▓▓▒▒▓▓░   ░░░░░░░░░░▒▒▒░▒▒▒▒▓▓▒▓▓▒       ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▒░         ░▒▓▓░      ░▒▓▓▒▒▒▒▒▓▒░     ░░▒▒▒░     ░▓▓▒▒▓▓░▓▓▒       ░▓▓▒           ▒▒▒░                               \n                             ░▒▓▓░         ░▒▓▓▒      ░▒▓▓▒▓▓▒▒▓▒░   ░░░░░░▒░░░   ░▓▓▒▒▓▓▒▓▓▒       ░▒▒▒           ░░░░                               \n                                ░                     ░▒▓▓▒▓▓▒▒▓▒░  ░░░░▒▒▒▒░░░░  ░▓▓▒▒▓▓░▒▓▒                                                         \n                                                      ░▒▓▓▒▓▓▒░░▒░      ▒▒▒▒▒░    ░▓▓▒▒▓▓░▓▓▒                                                         \n                                                      ░▒▓▓▒▓▓▒▒▒▒░     ░▒▒▒▒░░░   ░▓▒▒▒▒▓░▒▓▒                                                         \n                                                      ░▒▓▓▒▒▒░░░░░   ░░░░▒▒▒░░    ░▒░░░░░░░░░                                                         \n                                                                     ░░░▒▒▒▒░░                                                                        \n                                                             ░░░░░░░░░░░▒▒▒▒░░░░░░░░░░                                                                \n                                                           ░░░░▒▒▒▒▒▒▒░░▒▓▓▓░▒▒▒░▒░░░░░░░                                                             \n                                                              ░░░░░░░░░░░▒▒▒▒░░░░░░░░░                                                                \n                                                                       ░▒▒▒▒░░░                                                                       \n                                                                       ░▒▒▒▒░                                                                         \n                                                                     ░░░░░░▒░                                                                         \n                                                                      ░ ░░░░                                                                          \n                                                                      ░░▒░░░░                                                                         \n                                                                        ░░▒▒▒░░                                                                       \n");
 		printWithDelay("//The burn was successful, and we're now on course for an intercept with the TSS. We're just waiting on their own burn.\n\n", 50);
@@ -483,8 +505,10 @@ int main() {
 		qte(1);
 		system("cls");
 		nasaRadioUtility();
-		printWithDelay("INBOUND: 'ISS, this is Tiangong. We are initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Burn complete. We are on course to intercept.'\n\n", 150);
-		printWithDelay("OUTBOUND: 'Copy, Tiangong. See you on the other side.'\n\n", 150);
+		std::cout << "  INBOUND:  ";
+		printWithDelay("'ISS, this is Tiangong. We are initiating burn in 3, 2, 1. Burning for 10, 9, 8, 7, 6, 5, 4, 3, 2, 1. Burn complete. We are on course to intercept.'\n\n", 150);
+		std::cout << "  OUTBOUND: ";
+		printWithDelay("'Copy, Tiangong. See you on the other side.'\n\n", 150);
 		pauseForEnter();
 		printWithDelay("//Tiangong's burn was also a succecss, and we're now on course to intercept. It should be smooth sailing from here...\n\n", 50);
 		pauseForEnter();
