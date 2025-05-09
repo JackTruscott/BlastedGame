@@ -1,4 +1,5 @@
 Game Overview
+
 Title: Blasted
 
 Platform: Windows (Text-based, in your command prompt or other terminal)
