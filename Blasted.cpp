@@ -433,7 +433,8 @@ int main() {
 		std::cout << "  OUTBOUND: ";
 		printWithDelay("'Tiangong, TSS, this is ISS, NA1SS, do you copy?' \n\n", 150);
 		std::cout << "  INBOUND:  ";
-		printWithDelay("'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' (This is a shift cipher. Look for similarities to find the shift code.) \n\n", 150);
+		printWithDelay("'LVV, zh kdyh vrolg frsb! Wklv lv Wldqjrqj, zh uhdg!' \n\n", 150);
+		std::cout << "(This is a shift cipher. Look for similarities to find the shift code.)" << endl << endl;
 		printAtBottom("Fun Fact: NA1SS is the official callsign of the International Space Station. It is used for amateur radio (HAM) contact with the station. Anybody with proper training can contact the ISS at certain times.");
 		pauseForEnter();
 		printWithDelay("//The signal is weak, and we can't tell what they're saying. Maybe a number can help us tune in...", 50);
